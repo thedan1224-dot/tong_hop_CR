@@ -184,6 +184,9 @@ table.dgrid td.pn{position:relative}table.dgrid td.pn input.cell{padding-right:2
 table.dgrid td.dc{position:relative}table.dgrid td.dc input.cell{padding-right:20px}
 button.dcb{position:absolute;right:1px;top:50%;transform:translateY(-50%);border:0;background:none;font-size:11px;line-height:1;cursor:pointer;padding:3px;border-radius:4px;opacity:0}
 table.dgrid tr:hover button.dcb,table.dgrid td.dc.empty button.dcb,table.dgrid td.dc:focus-within button.dcb{opacity:1}button.dcb:hover{background:#e6ecf5}
+/* cột tự co giãn: bỏ mũi tên gợi ý (datalist) chiếm chỗ chữ; ô mã nhiệt luyện ghép xuống tối đa 2 dòng */
+table.dgrid input.cell::-webkit-calendar-picker-indicator{display:none!important}
+table.dgrid td.w2{white-space:normal;overflow-wrap:anywhere;font-size:11px;line-height:1.12;padding:0 4px}table.dgrid td.w2 .nw{white-space:nowrap}
 table.dgrid td.dc input.dp{position:absolute;left:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0;margin:0}
 body.ro-list button.dcb,table.dgrid td.lkc button.dcb{display:none!important}
 button.cn{cursor:help;position:absolute;right:1px;top:50%;transform:translateY(-50%);border:0;background:none;font-size:11px;line-height:1;color:#7d8aa0;cursor:pointer;padding:3px 3px;border-radius:4px;opacity:0}
@@ -1053,9 +1056,9 @@ function renderDash(){
 const PSsaved=k=>{try{const v=+localStorage.getItem(LS+k);return [100,200,300].includes(v)?v:300}catch(e){return 300}};
 let page=1e9,GO_END=true,selected=new Set(),PS=PSsaved('_ps_main');
 const ACT_W=128,TOPS=[0,28,56,84,124],RH=[28,28,28,40,30];
-/* độ rộng tối thiểu theo tiêu đề / tối đa theo cột (px); độ rộng thực tế = đo theo nội dung dài nhất trong cột */
-const MINW=[78,78,58,62,78,84,84,112,150,70,62,62,62,62,34,34,34,34,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,86,40,40,40,42,40,40,40,42,40,40,40,42,86,90,92];
-const MAXW=[100,170,100,72,150,118,118,150,420,280,150,150,150,150,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,100,60,60,60,60,60,60,60,60,60,60,60,60,200,300,130];
+/* độ rộng tối thiểu / tối đa theo cột (px); độ rộng thực tế = đo theo nội dung dài nhất trong cột, nhưng không hẹp hơn tiêu đề cột (tiêu đề xuống tối đa 3 dòng) */
+const MINW=[60,60,40,40,56,56,56,60,100,56,56,56,56,56,34,34,34,34,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,60,40,40,40,42,40,40,40,42,40,40,40,42,60,60,60];
+const MAXW=[110,180,100,72,150,120,120,130,200,220,150,150,150,150,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,100,60,60,60,60,60,60,60,60,60,60,60,60,180,240,130];
 let GW=MINW.slice();
 /* ẩn / hiện cột bảng Tổng (lưu trong trình duyệt) */
 let HID=(()=>{try{return new Set(JSON.parse(localStorage.getItem(LS+'_hid')||'[]'))}catch(e){return new Set()}})();
@@ -1070,11 +1073,37 @@ function computeFreeze(){
 }
 const fz=c=>FRZ_ON&&c<FROZEN_N?{cls:' frz'+(c===LASTFZ?' frz-last':''),st:` style="left:${FLEFT[c]}px"`}:{cls:'',st:''};
 let _cv=null;
-function textW(t,bold){if(!_cv){_cv=document.createElement('canvas').getContext('2d')}_cv.font=(bold?'600 ':'')+'12px "Segoe UI",Roboto,Arial,sans-serif';return _cv.measureText(t).width}
+/* ===== đo chữ để tự co giãn độ rộng cột (dùng chung cho Bảng tổng, Độ cứng, Thông số lò) ===== */
+const FNT='"Segoe UI",Roboto,Arial,sans-serif',TFONT='12px '+FNT,TFONT_B='600 12px '+FNT,TFONT_S='11px '+FNT,HFONT='600 11.5px '+FNT;
+const _twc=new Map();
+function textWf(t,font){t=String(t);const k=font+'|'+t;let w=_twc.get(k);if(w===undefined){if(!_cv)_cv=document.createElement('canvas').getContext('2d');_cv.font=font;w=_cv.measureText(t).width;if(_twc.size>60000)_twc.clear();_twc.set(k,w)}return w}
+function textW(t,bold){return textWf(t,bold?TFONT_B:TFONT)}
+function hdrLines(ws,sp,W){let n=1,cur=-1;for(const w of ws){if(cur<0)cur=w;else if(cur+sp+w<=W)cur+=sp+w;else{n++;cur=w}}return n}
+/* tiêu đề dựng đứng (cao tối đa ~88px): cột phải đủ rộng cho số dòng chữ đứng cần có */
+function vhdrW(t){const sp=textWf(' ',HFONT),ws=String(t).trim().split(/\s+/).map(x=>textWf(x,HFONT));return Math.ceil(hdrLines(ws,sp,86)*13.3)+8}
+const GW_VHDR={27:'Nhiệt độ phục hồi',28:'Thời gian di chuyển sản phẩm',29:'Thời gian tôi, phút',30:'Thời gian di chuyển sản phẩm, phút (<30 phút)',31:'Nhiệt độ lò ram ban đầu'};
+/* độ rộng nhỏ nhất để tiêu đề cột (chữ đậm) xuống tối đa `lines` dòng mà không bị cắt chữ */
+function hdrW(t,lines){
+  t=String(t||'').trim();if(!t)return 0;
+  const sp=textWf(' ',HFONT),ws=t.split(/\s+/).map(x=>textWf(x,HFONT));
+  const nL=W=>hdrLines(ws,sp,W);
+  let lo=Math.max(...ws),hi=ws.reduce((a,b)=>a+b,0)+sp*(ws.length-1);
+  if(nL(lo)>lines)while(hi-lo>0.5){const m=(lo+hi)/2;if(nL(m)<=lines)hi=m;else lo=m}else hi=lo;
+  return Math.ceil(hi)+9}
+/* mã ghép kiểu VF0120A23-VF0124H23-VF0206Q26-1-VF0207T22: độ rộng để xuống tối đa 2 dòng (ngắt trước mỗi mã lò) */
+function wrap2W(v,font){v=String(v);const p=v.split(/(?<=-)(?=\D)/);let best=textWf(v,font);
+  for(let i=1;i<p.length;i++){const a=textWf(p.slice(0,i).join(''),font),b=textWf(p.slice(i).join(''),font);if(Math.max(a,b)<best)best=Math.max(a,b)}return best}
+const wbrH=v=>String(v??'').split(/(?<=-)(?=\D)/).map(x=>'<span class="nw">'+esc(x)+'</span>').join('<wbr>'); // ngắt dòng trước mã lò kế tiếp, không tách hậu tố mẻ -1 / -2
+const GW_HDR={0:'Ngày Đúc',1:'Sản phẩm',2:'Mác',3:'Số lượng, cái',4:'Mã sản phẩm',5:'Melt No',6:'Mã mẫu thử',7:'NBT status',8:'Mã nhiệt luyện ▾▾',9:'Ghi chú',33:'Ngày kiểm tra',46:'Đơn hàng',47:'Ghi chú',48:'Kết quả (tự động)'};
+const GW_LONG=new Set([1,9,46,47]); // cột chữ dài: quá độ rộng tối đa thì rê chuột vào ô để xem đủ
 function computeGW(){
   const mx=new Array(49).fill(0),seen=Array.from({length:49},()=>new Set());
-  DB.records.forEach(r=>{const e=evaluate(r);for(let c=0;c<=48;c++){if(c===7)continue;const v=getCell(r,c,e);if(!v||seen[c].has(v))continue;seen[c].add(v);const w=textW(v,c===48);if(w>mx[c])mx[c]=w}});
-  return MINW.map((mn,c)=>{let need=mx[c]?mx[c]+16:0;if(c===4||c===0)need+=20;return Math.round(Math.min(MAXW[c],Math.max(mn,need)))});
+  DB.records.forEach(r=>{const e=evaluate(r);for(let c=0;c<=48;c++){const v=String(getCell(r,c,e)??'');if(!v||seen[c].has(v))continue;seen[c].add(v);
+    const w=c===8?wrap2W(v,TFONT_S):textWf(v,c===7||c===48?TFONT_B:TFONT);if(w>mx[c])mx[c]=w}});
+  return MINW.map((mn,c)=>{
+    /* phần đệm: chữ cách viền 4px mỗi bên + viền; ô Ngày đúc / Mã sản phẩm có thêm nút 📅 / ＋ bên phải */
+    const need=mx[c]?mx[c]+(c===0||c===4?27:c===8?11:c===7?12:14):0;
+    return Math.round(Math.min(MAXW[c],Math.max(mn,GW_HDR[c]?hdrW(GW_HDR[c],3):0,GW_VHDR[c]?vhdrW(GW_VHDR[c]):0,need)))});
 }
 /* ===== Tự động lấy thông số lò (tab "Thông số lò NL") đưa vào các cột nhiệt luyện của Bảng tổng ===== */
 let FDV=0;
@@ -1293,7 +1322,7 @@ function rowHTML(x,si,no){
     if(!vis(c))continue;
     const v=getCell(r,c,e);
     if(RO.has(c)){
-      s+=`<td class="ro${c===8||c===48?' t':''}${badCell(c,e)?' bad':''}" data-c="${c}" ${c===48&&e.reasons.length?`title="${esc(e.reasons.join('; '))}"`:''}>${esc(v)}</td>`;
+      s+=`<td class="ro${c===8||c===48?' t':''}${c===8?' w2':''}${badCell(c,e)?' bad':''}" data-c="${c}" ${c===48&&e.reasons.length?`title="${esc(e.reasons.join('; '))}"`:''}>${c===8?wbrH(v):esc(v)}</td>`;
     }else if(c===7){
       s+=`<td class="${nbCls(v)}" data-c="7"><select class="cell" data-c="7"><option value=""></option>${NBT_STATUS.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}${v&&!NBT_STATUS.includes(v)?`<option selected>${esc(v)}</option>`:''}</select></td>`;
     }else{
@@ -1303,7 +1332,8 @@ function rowHTML(x,si,no){
       if(c===0){const f0=fz(0);s+=`<td class="dc${r.date?'':' empty'}${f0.cls}" data-c="0"${f0.st}><input size="1" class="cell" data-c="0" value="${esc(v)}" placeholder="dd/mm/yyyy" autocomplete="off"><button class="dcb" tabindex="-1" data-a="cal" title="Chọn ngày trên lịch (Alt+↓)">📅</button><input type="date" class="dp" tabindex="-1" aria-hidden="true"></td>`;continue}
       if(c===4){const f4=fz(4);s+=`<td class="pn${r.pnote?' has':''}${f4.cls}" data-c="4"${f4.st}><input size="1" class="cell" data-c="4" value="${esc(v)}" autocomplete="off"><button class="cn" data-a="note"${r.pnote?'':' title="Thêm ghi chú cho mã sản phẩm này"'}>${r.pnote?'ⓘ':'＋'}</button></td>`;continue}
       const fc=fz(c),av=autoView(r,c);
-      s+=`<td class="${k}${av?av.cls:''}${fc.cls}" data-c="${c}"${fc.st}${av?` title="${esc(av.tip)}"`:tip}><input size="1" class="cell ${NUMC.has(c)?'n':''}" data-c="${c}" value="${esc(v)}"${lst} autocomplete="off"></td>`;
+      const lt=GW_LONG.has(c)&&v&&textWf(v,TFONT)+14>GW[c]?` title="${esc(v)}"`:'';
+      s+=`<td class="${k}${av?av.cls:''}${fc.cls}" data-c="${c}"${fc.st}${av?` title="${esc(av.tip)}"`:tip}><input size="1" class="cell ${NUMC.has(c)?'n':''}" data-c="${c}" value="${esc(v)}"${lst}${lt} autocomplete="off"></td>`;
     }
   }
   return s+'</tr>';
@@ -1658,7 +1688,7 @@ function refreshRow(tr,r){
   const e=evaluate(r);tr.className=rowCls(e,r);
   tr.querySelectorAll('td[data-c]').forEach(td=>{
     const c=+td.dataset.c,v=getCell(r,c,e);
-    if(RO.has(c)){td.textContent=v;td.classList.toggle('bad',badCell(c,e));if(c===48)td.title=e.reasons.join('; ')}
+    if(RO.has(c)){if(c===8)td.innerHTML=wbrH(v);else td.textContent=v;td.classList.toggle('bad',badCell(c,e));if(c===48)td.title=e.reasons.join('; ')}
     else if(c===7){td.className=nbCls(v);const s=td.firstChild;if(s.value!==v)s.value=v}
     else{const i=td.firstChild;if(i!==document.activeElement&&i.value!==v)i.value=v;if(c===0)td.classList.toggle('empty',!r.date);if(AUTOCOLS.has(c))autoMark(td,r,c)}
   });
@@ -2141,6 +2171,20 @@ function hdDisp(h,c){
   if(c.f==='ht')return h.ht[c.k];if(c.f==='t')return fmtDate(h.t[c.k]);
   if(c.f==='v'){const x=h.v[c.k*3+c.j];return x==null?'':x}
   if(c.f==='n')return h.n[c.k];return ''}
+/* tự co giãn cột bảng Độ cứng theo dữ liệu (không hẹp hơn tiêu đề) */
+const HD_HDR={date:['Ngày đúc',5],melt:['Mã đúc',5],grade:['Mác',5],product:['Sản phẩm',5],pcode:['Mã sản phẩm',5],ht:['Mã nhiệt luyện',3],t:['Ngày kiểm tra',3],v:['1',1],tb:['TB',1],kq:['KQ',3],n:['Ghi chú',3]};
+const HD_LIM={date:[60,110],melt:[56,140],grade:[40,100],product:[60,180],pcode:[56,150],ht:[60,240],t:[60,110],v:[38,60],tb:[44,64],kq:[48,90],n:[60,220]};
+const hdWrapHt=(h,c,ed)=>c.f==='ht'&&(!ed||(c.k===0&&!!h.rid)); // ô mã nhiệt luyện chỉ xem → xuống 2 dòng
+function hdFitW(cols,ed,list){ // list = các dòng đang lọc (mọi trang) → cột vừa với dữ liệu đang xem
+  cols.forEach(c=>{
+    const lim=HD_LIM[c.f]||[40,200],seen=new Set();let mx=0;
+    if(c.f==='kq')mx=Math.max(...['Đạt','Không đạt','Chưa có TC'].map(t=>textWf(t,TFONT_B)));
+    else if(c.f==='tb')list.forEach(h=>{const tb=hdTB(h,c.k);if(tb==null)return;const t=fmt(tb,1);if(seen.has(t))return;seen.add(t);mx=Math.max(mx,textWf(t,TFONT))});
+    else list.forEach(h=>{const v=String(hdDisp(h,c)??'');if(!v)return;const wr=hdWrapHt(h,c,ed),key=(wr?'1':'0')+v;if(seen.has(key))return;seen.add(key);
+      const w=wr?wrap2W(v,TFONT_S):textWf(v,TFONT);if(w>mx)mx=w});
+    let lo=lim[0];if(ed&&(c.f==='ht'||c.f==='n'))lo=Math.max(lo,90); // cột trống vẫn đủ chỗ để gõ
+    const need=mx?mx+14:0,[ht,ln]=HD_HDR[c.f]||['',1];
+    c.w=Math.round(Math.min(lim[1],Math.max(lo,hdrW(ht,ln),need)))})}
 function hdHead(cols){
   const nk=HD_R34?4:2;
   let s='<colgroup><col style="width:78px">'+cols.map(c=>`<col style="width:${c.w}px">`).join('')+'</colgroup><thead><tr><th class="corner" rowspan="3" style="top:0;left:0;height:78px">#</th>';
@@ -2159,7 +2203,7 @@ function hdCellHTML(h,c,ed){
   if(c.f==='tb'){const tb=hdTB(h,c.k),r=hdRes(h,c.k);return `<td class="ro${r==='Không đạt'?' bad':''}" data-c="${i}">${tb==null?'':fmt(tb,1)}</td>`}
   if(c.f==='kq'){const r=hdRes(h,c.k);return `<td class="ro t ${r==='Đạt'?'kq-ok':r==='Không đạt'?'kq-bad':''}" data-c="${i}">${esc(r)}</td>`}
   const dv=hdDisp(h,c),num=c.f==='v',ro=!ed||(c.f==='ht'&&c.k===0&&linked);
-  if(ro)return `<td class="ro${num?'':' t'}" data-c="${i}"${c.f==='ht'&&c.k===0&&linked?' title="Mã nhiệt luyện lần 1 lấy từ Bảng tổng"':''}>${esc(dv)}</td>`;
+  if(ro){const w2=c.f==='ht';return `<td class="ro${num?'':' t'}${w2?' w2':''}" data-c="${i}"${c.f==='ht'&&c.k===0&&linked?' title="Mã nhiệt luyện lần 1 lấy từ Bảng tổng"':''}>${w2?wbrH(dv):esc(dv)}</td>`}
   return `<td data-c="${i}"><input size="1" class="cell${num?' n':''}" data-c="${i}" value="${esc(dv)}" autocomplete="off"></td>`}
 function hdRowHTML(h,no,cols,ed){
   const fin=hdFinal(h),linked=!!h.rid;
@@ -2212,7 +2256,7 @@ function renderHard(){
   $('hg-info').textContent='Trang '+(HD_PAGE+1)+'/'+pages;
   $('hd-r34').textContent=HD_R34?'Ẩn nhiệt luyện lần 3 - 4':'Hiện nhiệt luyện lần 3 - 4';
   $('h-std').textContent='Tiêu chuẩn độ cứng (HB): '+(hbTxt()||'chưa đặt — vào tab "Kiểm tra đạt/không đạt"')+'. Độ cứng TB ngoài khoảng này là "Không đạt" (ô TB và cả dòng tô đỏ).';
-  const w=78+cols.reduce((a,c)=>a+c.w,0);$('hardTbl').style.width=w+'px';
+  hdFitW(cols,ed,rows);const w=78+cols.reduce((a,c)=>a+c.w,0);$('hardTbl').style.width=w+'px';
   $('hardTbl').innerHTML=hdHead(cols)+'<tbody>'+(HD_VIEW.length?HD_VIEW.map((h,i)=>hdRowHTML(h,HD_PAGE*HD_PS+i+1,cols,ed)).join(''):`<tr><td colspan="${cols.length+1}" style="padding:30px;color:#6b7788;text-align:center">Chưa có dòng nào trong bộ lọc này. Nhập dữ liệu ở tab Bảng tổng (dòng mới tự xuất hiện ở đây) hoặc vào tab Dữ liệu để nhập file "Độ cứng sản phẩm".</td></tr>`)+'</tbody>';
   if(HD_GO_END){HD_GO_END=false;const w=$('hGrid');if(w)w.scrollTop=w.scrollHeight}}
 /* ---- tổng hợp theo tháng ---- */
@@ -2808,6 +2852,14 @@ function fCellHTML(row,col,ed,fl){
 function fRowHTML(row,no,ed,prev){
   const T=FT[row.type],fl=fRowFlags(row);
   return `<tr data-key="${esc(row.key)}" class="${fl.bad.size?'fail':''}${row.orphan?' lone':''}${prev!==undefined&&prev!==U(row.code)?' lotstart':''}"><td class="act"><span class="rn">${no}</span></td>`+T.cols.map(c=>fCellHTML(row,c,ed,fl)).join('')+'</tr>'}
+/* tự co giãn cột bảng Thông số lò theo dữ liệu (tiêu đề tối đa 2 dòng) */
+function fFitW(T,type){
+  return T.cols.map(([f,t,w,kind])=>{
+    if(kind==='ro'||kind==='pdf'||kind==='mv')return w;
+    let mx=kind==='dt'?textWf('dd/mm/yyyy hh:mm',TFONT):f==='tq'&&type==='t'?textWf('Bảng tổng: 00.0',TFONT):0;
+    for(const k in FD){if(!k.startsWith(type+'|'))continue;let v=FD[k][f];if(v==null||v==='')continue;v=kind==='dt'?fDispDT(v):String(v);const x=textWf(v,TFONT);if(x>mx)mx=x}
+    const lo=f==='note'?90:kind==='txt'?70:50,hi=f==='note'?240:180;
+    return Math.round(Math.min(hi,Math.max(lo,hdrW(t,2),mx?mx+14:0)))})}
 function renderFurn(){
   FMAP=fBuild();
   const bar=['ha','u','t','r'].map(k=>{const rows=[...FMAP[k].values()],inc=rows.filter(r=>fRowFlags(r).miss).length;
@@ -2826,8 +2878,8 @@ function renderFurn(){
   const total=FMAP[FVIEW].size,inc=rows.filter(r=>fRowFlags(r).miss).length,bad=rows.filter(r=>fRowFlags(r).bad.size).length;
   $('fv-count').textContent=rows.length+' / '+total+' dòng · '+inc+' chưa nhập đủ'+(bad?' · '+bad+' cảnh báo đỏ':'');
   $('fv-info').textContent='Trang '+(FPAGE+1)+'/'+pages;
-  const w=44+T.cols.reduce((a,c)=>a+c[2],0);$('furnTbl').style.width=w+'px';
-  $('furnTbl').innerHTML='<colgroup><col style="width:44px">'+T.cols.map(c=>`<col style="width:${c[2]}px">`).join('')+'</colgroup><thead><tr><th style="top:0;height:46px;left:0;z-index:6">#</th>'+T.cols.map(c=>`<th style="top:0;height:46px">${esc(c[1])}</th>`).join('')+'</tr></thead><tbody>'+
+  const FW=fFitW(T,FVIEW),w=44+FW.reduce((a,b)=>a+b,0);$('furnTbl').style.width=w+'px';
+  $('furnTbl').innerHTML='<colgroup><col style="width:44px">'+FW.map(x=>`<col style="width:${x}px">`).join('')+'</colgroup><thead><tr><th style="top:0;height:46px;left:0;z-index:6">#</th>'+T.cols.map(c=>`<th style="top:0;height:46px">${esc(c[1])}</th>`).join('')+'</tr></thead><tbody>'+
     (FROWS.length?FROWS.map((r,i)=>fRowHTML(r,FPAGE*FPS+i+1,ed,i>0?U(FROWS[i-1].code):undefined)).join(''):`<tr><td colspan="${T.cols.length+1}" style="padding:30px;color:#6b7788;text-align:center">Chưa có dòng nào. Nhập mã lò ${T.name.toLowerCase()} ở cột "Mã nhiệt luyện" của tab Bảng tổng, dòng sẽ tự xuất hiện ở đây.</td></tr>`)+'</tbody>';
   if(FGO_END){FGO_END=false;const g=$('fGrid');if(g)g.scrollTop=g.scrollHeight}}
 let FY_INIT=true;
