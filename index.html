@@ -2446,6 +2446,11 @@ const AU_PRESETS={
 const colGroup=c=>c<=9?0:c<=32?1:c<=45?2:3;
 function auLoad(){
   try{const s=localStorage.getItem(AUK);if(s)AU=Object.assign({enabled:false,users:[],log:[],rec:null},JSON.parse(s))}catch(e){}
+  if(AU.enabled&&!AU.rev)AU.rev=1;
+  if(AU._sig===undefined)AU._sig=auSig(AU);
+  auResolve()}
+/* xác định người đang đăng nhập trên máy này (phiên hiện tại hoặc "ghi nhớ đăng nhập") */
+function auResolve(){
   try{const id=sessionStorage.getItem(LS+'_sess');CUR=id?AU.users.find(u=>u.id===id&&u.active!==false)||null:null}catch(e){CUR=null}
   if(!CUR&&AU.enabled){ /* ghi nhớ đăng nhập: khôi phục phiên từ mã ghi nhớ còn hạn */
     try{const rm=JSON.parse(localStorage.getItem(LS+'_remember')||'null');
@@ -2457,7 +2462,33 @@ function auLoad(){
 function auRemember(u,on){
   try{if(on){const tok=auRand(24),exp=Date.now()+30*864e5;u.rt={h:sha256(tok),exp};localStorage.setItem(LS+'_remember',JSON.stringify({id:u.id,tok,exp}))}
     else{delete u.rt;localStorage.removeItem(LS+'_remember')}}catch(e){}}
-function auSave(){try{localStorage.setItem(AUK,JSON.stringify(AU))}catch(e){alert('Không lưu được danh sách người dùng: '+e.message)}}
+/* ---- đồng bộ phân quyền qua máy chủ: danh sách người dùng + quyền là CHUNG cho mọi máy ----
+   rev tăng mỗi khi quản trị thay đổi người dùng/quyền; bản có rev cao hơn thắng. Nhật ký, lần đăng nhập cuối,
+   mã "ghi nhớ đăng nhập" là riêng từng máy nên không gửi đi. */
+const auStrip=u=>{const c=Object.assign({},u);delete c.last;delete c.rt;return c};
+function auSig(a){try{return JSON.stringify([!!a.enabled,(a.users||[]).map(auStrip),a.rec||null])}catch(e){return ''}}
+function auPack(){return {enabled:!!AU.enabled,rev:AU.rev||0,users:AU.users.map(auStrip),rec:AU.rec||null}}
+function auSaveRaw(){try{localStorage.setItem(AUK,JSON.stringify(AU))}catch(e){alert('Không lưu được danh sách người dùng: '+e.message)}}
+function auSave(){
+  const sg=auSig(AU);
+  if(sg!==AU._sig){AU._sig=sg;AU.rev=(AU.rev||0)+1;auSaveRaw();try{cloudMarkDirty()}catch(e){}return}
+  auSaveRaw()}
+/* nhận phân quyền từ máy chủ; trả về true nếu máy này đang có bản MỚI HƠN cần gửi lên */
+function auAdopt(sa){
+  if(!sa||!Array.isArray(sa.users)){return !!(AU.enabled&&AU.synced!==AU.rev)}
+  const sr=Number(sa.rev)||0;
+  if(sr<(AU.rev||0))return true; // máy này có bản phân quyền mới hơn (vừa sửa, chưa gửi) → giữ và gửi lên
+  const loc={};AU.users.forEach(u=>loc[u.id]=u);
+  const wasOn=AU.enabled,wasCur=CUR?CUR.id:null,before=auSig(AU);
+  AU.enabled=!!sa.enabled;AU.rec=sa.rec||null;AU.rev=sr;AU.synced=sr;
+  AU.users=sa.users.map(u=>{const c=Object.assign({},u),l=loc[u.id];if(l){if(l.last)c.last=l.last;if(l.rt&&c.hash===l.hash)c.rt=l.rt}return c});
+  AU._sig=auSig(AU);auSaveRaw();
+  if(before!==AU._sig){
+    auResolve();
+    if(wasCur&&!CUR){try{sessionStorage.removeItem(LS+'_sess')}catch(e){}}
+    try{auApply();if(AU.enabled&&!CUR){auShowLogin();if(!wasOn)toast('Quản trị viên đã bật phân quyền — vui lòng đăng nhập');else if(wasCur)toast('Tài khoản của bạn đã bị thay đổi/khóa — vui lòng đăng nhập lại')}
+      const up=document.querySelector('.page.on');if(up&&up.id==='p-users')renderUsers()}catch(e){console.error(e)}}
+  return false}
 function auLog(a){if(!AU.enabled)return;AU.log.push({t:Date.now(),u:CUR?CUR.name:'-',a});if(AU.log.length>400)AU.log.splice(0,AU.log.length-400);auSave()}
 const auName=()=>CUR?(CUR.disp||CUR.name):'';
 function can(sec){
@@ -2540,7 +2571,7 @@ function renderUsers(){
       <label>Nhập lại mật khẩu *<input type="password" id="us-pw2" autocomplete="new-password"></label></div>
      <div class="msg err" id="us-err"></div>
      <div class="toolbar"><button class="btn pri" id="us-enable">Bật phân quyền và tạo tài khoản quản trị</button></div>
-     <div class="hint" style="font-size:12px;line-height:1.5"><b>Lưu ý quan trọng:</b> phần mềm chạy hoàn toàn trên trình duyệt, dữ liệu và danh sách người dùng nằm trên máy này. Phân quyền ở đây ngăn thao tác nhầm và phân việc giữa các nhân viên dùng chung phần mềm, nhưng <u>không phải biện pháp bảo mật tuyệt đối</u> — người rành kỹ thuật có quyền truy cập máy/trình duyệt vẫn có thể vượt qua. Mỗi máy/trình duyệt có dữ liệu và danh sách người dùng riêng; dùng nút "Xuất/Nhập người dùng" để sao chép sang máy khác.</div>`;
+     <div class="hint" style="font-size:12px;line-height:1.5"><b>Lưu ý quan trọng:</b> phần mềm chạy hoàn toàn trên trình duyệt, dữ liệu và danh sách người dùng nằm trên máy này. Phân quyền ở đây ngăn thao tác nhầm và phân việc giữa các nhân viên dùng chung phần mềm, nhưng <u>không phải biện pháp bảo mật tuyệt đối</u> — người rành kỹ thuật có quyền truy cập máy/trình duyệt vẫn có thể vượt qua. Khi có kết nối máy chủ đồng bộ, danh sách người dùng và phân quyền được <b>tự động áp dụng cho mọi máy</b> (máy khác phải tải lại trang bản mới bằng Ctrl+F5).</div>`;
     return}
   if(!auCanUsers()){lg.style.display='none';b.innerHTML='<h3>Người dùng</h3><div class="muted">Bạn không có quyền quản lý người dùng.</div>';return}
   b.innerHTML=(AU_REC_SHOW?`<div class="recbox"><b>Mã khôi phục quản trị — hãy ghi lại và cất ở nơi an toàn (chỉ hiện một lần):</b><br><code>${esc(AU_REC_SHOW)}</code><br><span class="hint">Dùng khi quên mật khẩu quản trị: ở màn hình đăng nhập chọn "Quên mật khẩu?". Mã cũ sẽ mất hiệu lực khi tạo mã mới.</span><div class="toolbar"><button class="btn" data-ua="recok">Tôi đã ghi lại mã</button></div></div>`:'')+
@@ -3279,20 +3310,21 @@ init();
 const CLOUD_URL='https://script.google.com/macros/s/AKfycbzszFow6bkHJezsPxFJ2EoL6o4Z3TSGIhggXCY5PRFvu0vAQYk7IyFbJvcv_iWeJTPa/exec';
 const CLOUD_KEY='NBT_SYNC_2026_XYZ123';
 const CLOUD_LS=LS+'_cloud';
-const CLOUD_VER=3; /* phải khớp với Apps Script (Code.gs) — bản cũ của trang sẽ bị máy chủ từ chối để không ghi đè dữ liệu */
+const CLOUD_VER=4; /* phải khớp với Apps Script (Code.gs) — bản cũ của trang sẽ bị máy chủ từ chối để không ghi đè dữ liệu */
 let CLOUD_DIRTY=false,CLOUD_BUSY=false,CLOUD_LAST=0,CLOUD_TIMER=null,CLOUD_REV=0,CLOUD_APPLYING=false,CLOUD_PT=null,CLOUD_TYPING=0,CLOUD_SESSION=false;
 try{const s=JSON.parse(localStorage.getItem(CLOUD_LS)||'{}');CLOUD_LAST=Number(s.last)||0;CLOUD_DIRTY=!!s.dirty}catch(e){}
 function cloudEnabled(){return CLOUD_URL.startsWith('https://')&&!CLOUD_URL.includes('PASTE_')&&!!CLOUD_KEY&&CLOUD_KEY!=='CHANGE_THIS_SHARED_KEY'}
 function cloudPersist(){try{localStorage.setItem(CLOUD_LS,JSON.stringify({last:CLOUD_LAST,dirty:CLOUD_DIRTY}))}catch(e){}}
 function cloudMarkDirty(){if(!cloudEnabled()||CLOUD_APPLYING)return;CLOUD_DIRTY=true;CLOUD_REV++;cloudPersist();clearTimeout(CLOUD_PT);CLOUD_PT=setTimeout(cloudPush,2500)}
-function cloudPack(){return {db:DB,hard:HARD.map(hdPack).join('\n'),furn:FD,stamp:Date.now()}}
+function cloudPack(){const o={db:DB,hard:HARD.map(hdPack).join('\n'),furn:FD,stamp:Date.now()};if(AU.enabled||AU.rev)o.auth=auPack();return o}
 function cloudSig(x){try{return JSON.stringify([x.db,x.hard||'',x.furn||{}])}catch(e){return ''}}
 const cloudNow=()=>new Date().toLocaleTimeString('vi-VN');
 function cloudErrText(e){e=String(e||'Máy chủ từ chối');return e==='Unauthorized'?'Sai mã đồng bộ (SYNC_KEY trong Apps Script phải giống CLOUD_KEY trong index.html)':e}
 function cloudEditing(){if(Date.now()-CLOUD_TYPING<8000)return true;const m=document.getElementById('modal');return !!(m&&m.getClientRects().length&&getComputedStyle(m).display!=='none'&&getComputedStyle(m).visibility!=='hidden')}
-function cloudApply(x,stamp){
-  if(!x||!x.db)return false;CLOUD_APPLYING=true;
+function cloudApply(x,stamp,sa){
+  if(!x||!x.db)return false;CLOUD_APPLYING=true;let auNeed=false;
   try{
+    try{auNeed=auAdopt(sa||x.auth)}catch(e){console.error('Lỗi áp dụng phân quyền',e)}
     DB=x.db;if(!Array.isArray(DB.records))DB.records=[];if(!Array.isArray(DB.products))DB.products=[];
     HARD=(x.hard||'').split('\n').filter(Boolean).map(hdUnpack);FD=x.furn||{};
     try{localStorage.setItem(LS,JSON.stringify(DB));localStorage.setItem(LS+'_hard',HARD.map(hdPack).join('\n'));localStorage.setItem(LS+'_furn',JSON.stringify(FD))}catch(e){toast('Bộ nhớ trình duyệt đầy — dữ liệu mới chỉ hiển thị, chưa lưu được vào máy này')}
@@ -3300,7 +3332,7 @@ function cloudApply(x,stamp){
     try{refresh()}catch(e){console.error(e)}
     return true;
   }catch(e){console.error('Lỗi áp dụng dữ liệu đồng bộ',e);return false}
-  finally{CLOUD_APPLYING=false}
+  finally{CLOUD_APPLYING=false;if(auNeed)setTimeout(cloudMarkDirty,0)}
 }
 function cloudJsonp(params,ms){
   return new Promise((resolve,reject)=>{
@@ -3315,10 +3347,10 @@ function cloudJsonp(params,ms){
   });
 }
 function cloudLocalBackup(){download('sao-luu-truoc-dong-bo-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.json',JSON.stringify(Object.assign({},DB,{hardTSV:HARD.map(hdPack).join('\n'),furn:FD})),'application/json')}
-function cloudChoose(sx,st,why){
+function cloudChoose(sx,st,why,sa){
   const take=confirm(why+'\n\n• Bấm OK để LẤY dữ liệu từ máy chủ (máy này sẽ tự tải về 1 file sao lưu .json trước khi thay thế).\n• Bấm Hủy (Cancel) để GIỮ dữ liệu của máy này và ghi đè lên máy chủ.');
-  if(take){try{cloudLocalBackup()}catch(e){}cloudApply(sx,st);cloudStatus('Đã lấy dữ liệu từ máy chủ lúc '+cloudNow(),'ok')}
-  else{CLOUD_LAST=st;CLOUD_DIRTY=true;CLOUD_REV++;cloudPersist();setTimeout(cloudPush,50)}
+  if(take){try{cloudLocalBackup()}catch(e){}cloudApply(sx,st,sa);cloudStatus('Đã lấy dữ liệu từ máy chủ lúc '+cloudNow(),'ok')}
+  else{try{if(auAdopt(sa))0}catch(e){}CLOUD_LAST=st;CLOUD_DIRTY=true;CLOUD_REV++;cloudPersist();setTimeout(cloudPush,50)}
 }
 async function cloudGet(force){
   if(!cloudEnabled()||CLOUD_BUSY)return;
@@ -3333,12 +3365,13 @@ async function cloudGet(force){
       if(hasRec||CLOUD_DIRTY){CLOUD_DIRTY=true;CLOUD_REV++;cloudPersist();todo='push'}
       cloudStatus('Máy chủ chưa có dữ liệu'+(todo?' — đang gửi dữ liệu máy này lên':''),'ok');
     }else if(st===CLOUD_LAST||!x.data){
+      if(!CLOUD_DIRTY&&AU.enabled&&AU.synced!==AU.rev){CLOUD_DIRTY=true;CLOUD_REV++;cloudPersist()} // phân quyền chưa từng gửi lên máy chủ
       if(CLOUD_DIRTY)todo='push';
       cloudStatus('Đã kiểm tra lúc '+cloudNow(),'ok');
-    }else if(!CLOUD_DIRTY&&CLOUD_LAST){cloudApply(x.data,st);cloudStatus('Đã nhận dữ liệu mới lúc '+cloudNow(),'ok')}
-    else if(!hasRec){cloudApply(x.data,st);cloudStatus('Đã tải dữ liệu từ máy chủ lúc '+cloudNow(),'ok')} // máy mới, chưa có dữ liệu gì
-    else if(cloudSig(x.data)===cloudSig(cloudPack())){CLOUD_LAST=st;CLOUD_DIRTY=false;cloudPersist();cloudStatus('Đã khớp với máy chủ lúc '+cloudNow(),'ok')}
-    else todo=()=>cloudChoose(x.data,st,CLOUD_LAST?'Máy này có thay đổi chưa gửi lên máy chủ, trong khi máy khác cũng đã cập nhật dữ liệu.':'Lần đồng bộ đầu tiên: dữ liệu trên máy chủ KHÁC dữ liệu đang có ở máy này.');
+    }else if(!CLOUD_DIRTY&&CLOUD_LAST){cloudApply(x.data,st,x.auth);cloudStatus('Đã nhận dữ liệu mới lúc '+cloudNow(),'ok')}
+    else if(!hasRec){cloudApply(x.data,st,x.auth);cloudStatus('Đã tải dữ liệu từ máy chủ lúc '+cloudNow(),'ok')} // máy mới, chưa có dữ liệu gì
+    else if(cloudSig(x.data)===cloudSig(cloudPack())){CLOUD_LAST=st;CLOUD_DIRTY=false;cloudPersist();if(auAdopt(x.auth))setTimeout(cloudMarkDirty,0);cloudStatus('Đã khớp với máy chủ lúc '+cloudNow(),'ok')}
+    else todo=()=>cloudChoose(x.data,st,CLOUD_LAST?'Máy này có thay đổi chưa gửi lên máy chủ, trong khi máy khác cũng đã cập nhật dữ liệu.':'Lần đồng bộ đầu tiên: dữ liệu trên máy chủ KHÁC dữ liệu đang có ở máy này.',x.auth);
     CLOUD_SESSION=true;
   }catch(e){console.warn('Đồng bộ tải dữ liệu:',e);cloudStatus('Lỗi tải dữ liệu: '+e.message,'err')}
   finally{CLOUD_BUSY=false}
@@ -3348,7 +3381,7 @@ async function cloudPush(){
   if(!cloudEnabled()||!CLOUD_DIRTY)return;
   if(!CLOUD_SESSION){cloudGet(true);return} // mỗi lần mở trang: kiểm tra máy chủ trước rồi mới gửi
   if(CLOUD_BUSY){clearTimeout(CLOUD_PT);CLOUD_PT=setTimeout(cloudPush,3000);return}
-  CLOUD_BUSY=true;const rev=CLOUD_REV;let conflict=false;
+  CLOUD_BUSY=true;const rev=CLOUD_REV,arev=AU.rev||0;let conflict=false;
   try{
     cloudStatus('Đang gửi dữ liệu…');
     // Không đặt Content-Type (mặc định text/plain) → trình duyệt không gửi preflight, Apps Script nhận được và trả lời đọc được.
@@ -3357,14 +3390,15 @@ async function cloudPush(){
     try{x=JSON.parse(txt)}catch(_){throw new Error('Máy chủ trả về nội dung lạ (HTTP '+res.status+') — hãy Deploy lại Apps Script phiên bản mới')}
     if(x&&x.conflict)conflict=true;
     else if(!x||!x.ok)throw new Error(cloudErrText(x&&x.error));
-    else{CLOUD_LAST=Number(x.stamp)||CLOUD_LAST;if(CLOUD_REV===rev)CLOUD_DIRTY=false;cloudPersist();cloudStatus('Đã lưu lên máy chủ lúc '+cloudNow(),'ok')}
+    else{CLOUD_LAST=Number(x.stamp)||CLOUD_LAST;if(CLOUD_REV===rev)CLOUD_DIRTY=false;cloudPersist();
+      if(x.auth&&(Number(x.auth.rev)||0)>arev)auAdopt(x.auth);else if(AU.enabled||AU.rev){if(AU.rev===arev){AU.synced=arev;auSaveRaw()}}cloudStatus('Đã lưu lên máy chủ lúc '+cloudNow(),'ok')}
   }catch(e){
     console.warn('Đồng bộ gửi dữ liệu:',e);
     const m=e instanceof TypeError?'không kết nối được máy chủ (mất mạng, hoặc Apps Script chưa Deploy phiên bản mới / chưa cho phép "Anyone")':e.message;
     cloudStatus('Chưa gửi được: '+m+' — sẽ tự thử lại','err');
   }finally{CLOUD_BUSY=false}
   if(conflict){
-    try{const s=await cloudJsonp({since:-1});if(s&&s.ok!==false&&s.data)cloudChoose(s.data,Number(s.stamp)||0,'Máy khác vừa cập nhật dữ liệu lên máy chủ, trong khi máy này cũng có thay đổi chưa gửi.');else throw new Error(cloudErrText(s&&s.error))}
+    try{const s=await cloudJsonp({since:-1});if(s&&s.ok!==false&&s.data)cloudChoose(s.data,Number(s.stamp)||0,'Máy khác vừa cập nhật dữ liệu lên máy chủ, trong khi máy này cũng có thay đổi chưa gửi.',s.auth);else throw new Error(cloudErrText(s&&s.error))}
     catch(e){cloudStatus('Lỗi tải dữ liệu máy chủ: '+e.message,'err')}
   }else if(CLOUD_DIRTY&&CLOUD_REV!==rev){clearTimeout(CLOUD_PT);CLOUD_PT=setTimeout(cloudPush,2500)}
 }
