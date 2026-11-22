@@ -712,13 +712,22 @@ function evaluate(r){
   if(o.result==='Thiếu dữ liệu'&&!o.reasons.length){const m=[];if(o.r20==null)m.push('20ºC');if(o.r40==null)m.push('-40ºC');if(o.rhb==null)m.push('độ cứng');o.reasons.push('Thiếu: '+m.join(', '))}
   return o;
 }
-function serialToISO(n){return new Date(Date.UTC(1899,11,30)+n*864e5).toISOString().slice(0,10)}
+let XL_1904=false; /* file Excel dùng hệ ngày 1904 (thường gặp trên máy Mac) */
+function serialToISO(n){return new Date(Date.UTC(1899,11,30)+(n+(XL_1904?1462:0))*864e5).toISOString().slice(0,10)}
+const MON={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,sept:9,oct:10,nov:11,dec:12};
+function isoOK(y,mo,d){if(y<100)y+=2000;if(!(y>=1950&&y<=2100&&mo>=1&&mo<=12&&d>=1&&d<=31))return '';const t=new Date(Date.UTC(y,mo-1,d));if(t.getUTCMonth()!==mo-1)return '';return y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0')}
+/* Đọc ngày từ Excel / chữ: số ngày kiểu Excel (46024), dd/mm/yyyy, d-m-yy, yyyy-mm-dd, yyyy/mm/dd, 02-Jan-2026, Jan 2 2026, "ngày 2 tháng 1 năm 2026"…
+   Nếu "tháng" > 12 mà "ngày" ≤ 12 (ngày kiểu Mỹ mm/dd) thì tự đảo lại. */
 function parseDate(v,order){
-  if(v==null)return '';let s=String(v).trim();if(!s)return '';
-  if(/^\d{5}(\.\d+)?$/.test(s)){const n=Math.floor(Number(s));if(n>20000&&n<90000)return serialToISO(n)}
-  let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');
-  m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
-  if(m){let d=+m[1],mo=+m[2],y=+m[3];if(order==='mdy'){[d,mo]=[mo,d]}if(y<100)y+=2000;if(mo>12||d>31)return '';return y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0')}
+  if(v==null)return '';let s=String(v).replace(/[\u00a0\u200b]/g,' ').trim();if(!s)return '';
+  if(/^\d{5}(\.\d+)?$/.test(s)){const n=Math.floor(Number(s));if(n>20000&&n<90000)return serialToISO(n);return ''}
+  let m=s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);if(m)return isoOK(+m[1],+m[2],+m[3]);
+  m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})(?!\d)/);
+  if(m){let d=+m[1],mo=+m[2],y=+m[3];if(order==='mdy'){[d,mo]=[mo,d]}if(mo>12&&d<=12){[d,mo]=[mo,d]}return isoOK(y,mo,d)}
+  const low=s.toLowerCase();
+  m=low.match(/^(\d{1,2})[\s\/\-.]*([a-z]{3,4})[a-z]*[\s\/\-.,]*(\d{2,4})(?!\d)/);if(m&&MON[m[2]])return isoOK(+m[3],MON[m[2]],+m[1]);
+  m=low.match(/^([a-z]{3,4})[a-z]*[\s\/\-.]*(\d{1,2})(?:st|nd|rd|th)?[\s,\/\-.]+(\d{2,4})(?!\d)/);if(m&&MON[m[1]])return isoOK(+m[3],MON[m[1]],+m[2]);
+  m=low.match(/(?:ng[aà]y\s*)?(\d{1,2})\s*th[aá]ng\s*(\d{1,2})\s*(?:n[aă]m\s*)?[\/,\-.\s]*(\d{2,4})/);if(m)return isoOK(+m[3],+m[2],+m[1]);
   return '';
 }
 function fmtDate(iso){if(!iso)return '';const p=iso.split('-');return p[2]+'/'+p[1]+'/'+p[0]}
@@ -757,7 +766,7 @@ function rowFromTong(c,order,lastDate){
   o.i20=[num(c[34]),num(c[35]),num(c[36])];o.i40=[num(c[38]),num(c[39]),num(c[40])];o.hb=[num(c[42]),num(c[43]),num(c[44])];
   return o;
 }
-function mergeInto(ex,p){
+function mergeInto(ex,p,dateWins){
   for(const k in p){
     const v=p[k];
     if(Array.isArray(v)){
@@ -765,19 +774,22 @@ function mergeInto(ex,p){
         /* sheet Cơ tính cắt mã còn 9 ký tự (LEFT(...,9)) nên mất phần phân loại mẻ "-1"/"-2": giữ lại bản đầy đủ đã có */
         const c=cur[i];if(k==='ht'&&c&&c.length>x.length&&c.toUpperCase().startsWith(x.toUpperCase()+'-')&&/^\d+$/.test(c.slice(x.length+1)))return c;return x})}
       else if(v.some(x=>x!=null))ex[k]=v;
-    }else if(v!==''&&v!=null){if(k==='date'&&ex.date)continue;ex[k]=v}
+    }else if(v!==''&&v!=null){if(k==='date'&&ex.date&&!dateWins)continue;ex[k]=v}
   }
 }
 const U=s=>String(s||'').trim().toUpperCase();
 /* Nhập dữ liệu. Sheet Tổng: MỖI DÒNG là một bản ghi (nhiều sản phẩm có thể dùng chung một mã mẫu thử).
    Sheet Cơ tính: kết quả được gán cho MỌI bản ghi có cùng Mã mẫu thử (và cùng Melt No nếu có). */
 function importRecords(rows,type,order){
-  let added=0,updated=0,skipped=0,spread=0;
+  let added=0,updated=0,skipped=0,spread=0,redated=0,badDate=0;
   const parsed=[];let lastDate='';
   for(const c of rows){
-    const d0=parseDate(c[0],order);if(d0)lastDate=d0;
+    const d0=parseDate(c[0],order);if(d0)lastDate=d0;const raw0=String(c[0]==null?'':c[0]).trim();
     const p=type==='tong'?rowFromTong(c,order,lastDate):rowFromCotinh(c,order,lastDate);
-    if(!p){skipped++;continue}parsed.push(p);
+    if(!p){skipped++;continue}
+    /* ô Ngày đúc có chữ nhưng không đọc được: không ghi đè ngày đang có bằng ngày của dòng trên */
+    if(!d0&&raw0){badDate++;p._keepDate=true}
+    parsed.push(p);
   }
   const byBar=new Map();
   const idx=r=>{const k=U(r.bar);if(!k)return;(byBar.get(k)||byBar.set(k,[]).get(k)).push(r)};
@@ -795,10 +807,11 @@ function importRecords(rows,type,order){
       const k=U(p.bar)+'|'+U(p.melt)+'|'+U(p.product)+'|'+U(p.pcode);let ex=null;
       const a=pool.get(k);if(a&&a.length)ex=a.shift();
       if(!ex){const b=pool2.get(U(p.bar)+'|'+U(p.melt));if(b&&b.length){ex=b.shift()}}
-      if(ex){mergeInto(ex,p);autoFill(ex);updated++}
-      else{const r=Object.assign(blankRec(),p);autoFill(r);DB.records.push(r);idx(r);added++}
+      if(ex){const w=!p._keepDate;if(w&&p.date&&ex.date&&ex.date!==p.date)redated++;delete p._keepDate;mergeInto(ex,p,w);autoFill(ex);updated++}
+      else{delete p._keepDate;const r=Object.assign(blankRec(),p);autoFill(r);DB.records.push(r);idx(r);added++}
     }
   }else{
+    parsed.forEach(p=>delete p._keepDate);
     const occ={};parsed.forEach(p=>{const k=U(p.bar);occ[k]=(occ[k]||0)+1});const seen={};
     for(const p of parsed){
       const k=U(p.bar);seen[k]=(seen[k]||0)+1;
@@ -809,7 +822,7 @@ function importRecords(rows,type,order){
       else{const r=Object.assign(blankRec(),p);autoFill(r);DB.records.push(r);idx(r);added++}
     }
   }
-  return {added,updated,skipped,spread};
+  return {added,updated,skipped,spread,redated,badDate};
 }
 function importProducts(rows){
   const out=[];
@@ -882,6 +895,7 @@ async function openXlsx(file){
   if(typeof DecompressionStream==='undefined')throw new Error('Trình duyệt không hỗ trợ đọc Excel trực tiếp. Hãy dùng Chrome hoặc Edge bản mới.');
   const zip=await openZip(await file.arrayBuffer());
   const wb=parseXml(await zip.text('xl/workbook.xml'));
+  {const wp=wb.getElementsByTagName('workbookPr')[0];const f=wp&&wp.getAttribute('date1904');XL_1904=f==='1'||f==='true'}
   const rels=parseXml(await zip.text('xl/_rels/workbook.xml.rels'));
   const relMap={};[...rels.getElementsByTagName('Relationship')].forEach(r=>relMap[r.getAttribute('Id')]=r.getAttribute('Target'));
   const sheets=[...wb.getElementsByTagName('sheet')].map(s=>{const rid=s.getAttribute('r:id');const tg=relMap[rid]||'';return {name:s.getAttribute('name'),path:resolveXlsxPath(tg)}});
@@ -3196,7 +3210,7 @@ function init(){
   $('pmodal').addEventListener('input',updProdHint);
   $('pmodal').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.tagName==='INPUT'){e.preventDefault();saveProd()}else if(e.key==='Escape')$('pmodal').classList.remove('on')});
   $('i-file').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{$('i-text').value=rd.result};rd.readAsText(f,'utf-8')};
-  const report=(r,name)=>`${name}: thêm mới ${r.added}, cập nhật ${r.updated}${r.spread?` (${r.spread} dòng sản phẩm dùng chung mẻ nấu/mẫu thử với dòng đại diện)`:''}, bỏ qua ${r.skipped} dòng trống/tiêu đề`;
+  const report=(r,name)=>`${name}: thêm mới ${r.added}, cập nhật ${r.updated}${r.redated?` (${r.redated} dòng được đổi Ngày đúc theo file Excel)`:''}${r.spread?` (${r.spread} dòng sản phẩm dùng chung mẻ nấu/mẫu thử với dòng đại diện)`:''}, bỏ qua ${r.skipped} dòng trống/tiêu đề${r.badDate?` — CHÚ Ý: ${r.badDate} ô Ngày đúc không đọc được (dòng đã có ngày thì giữ nguyên, dòng mới lấy ngày của dòng phía trên)`:''}`;
   $('i-go').onclick=()=>{
     const text=$('i-text').value;if(!text.trim()){msg($('i-msg'),'Chưa có dữ liệu để nhập.',true);return}
     const rows=parseTable(text),type=$('i-type').value;
@@ -3265,6 +3279,7 @@ init();
 const CLOUD_URL='https://script.google.com/macros/s/AKfycbzszFow6bkHJezsPxFJ2EoL6o4Z3TSGIhggXCY5PRFvu0vAQYk7IyFbJvcv_iWeJTPa/exec';
 const CLOUD_KEY='NBT_SYNC_2026_XYZ123';
 const CLOUD_LS=LS+'_cloud';
+const CLOUD_VER=3; /* phải khớp với Apps Script (Code.gs) — bản cũ của trang sẽ bị máy chủ từ chối để không ghi đè dữ liệu */
 let CLOUD_DIRTY=false,CLOUD_BUSY=false,CLOUD_LAST=0,CLOUD_TIMER=null,CLOUD_REV=0,CLOUD_APPLYING=false,CLOUD_PT=null,CLOUD_TYPING=0,CLOUD_SESSION=false;
 try{const s=JSON.parse(localStorage.getItem(CLOUD_LS)||'{}');CLOUD_LAST=Number(s.last)||0;CLOUD_DIRTY=!!s.dirty}catch(e){}
 function cloudEnabled(){return CLOUD_URL.startsWith('https://')&&!CLOUD_URL.includes('PASTE_')&&!!CLOUD_KEY&&CLOUD_KEY!=='CHANGE_THIS_SHARED_KEY'}
@@ -3290,7 +3305,7 @@ function cloudApply(x,stamp){
 function cloudJsonp(params,ms){
   return new Promise((resolve,reject)=>{
     const cb='cloudCb_'+Date.now()+'_'+Math.random().toString(36).slice(2);
-    const q=Object.entries(Object.assign({key:CLOUD_KEY,t:Date.now(),callback:cb},params||{})).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+    const q=Object.entries(Object.assign({key:CLOUD_KEY,v:CLOUD_VER,t:Date.now(),callback:cb},params||{})).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
     const sc=document.createElement('script');
     const timer=setTimeout(()=>{done();reject(new Error('Máy chủ không phản hồi — kiểm tra Apps Script đã Deploy phiên bản mới và quyền truy cập là "Anyone"'))},ms||45000);
     function done(){clearTimeout(timer);window[cb]=function(){};setTimeout(()=>{try{delete window[cb]}catch(e){}},120000);sc.remove()}
@@ -3337,7 +3352,7 @@ async function cloudPush(){
   try{
     cloudStatus('Đang gửi dữ liệu…');
     // Không đặt Content-Type (mặc định text/plain) → trình duyệt không gửi preflight, Apps Script nhận được và trả lời đọc được.
-    const res=await fetch(CLOUD_URL,{method:'POST',body:JSON.stringify({key:CLOUD_KEY,base:CLOUD_LAST,data:cloudPack()}),redirect:'follow'});
+    const res=await fetch(CLOUD_URL,{method:'POST',body:JSON.stringify({key:CLOUD_KEY,v:CLOUD_VER,base:CLOUD_LAST,data:cloudPack()}),redirect:'follow'});
     const txt=await res.text();let x;
     try{x=JSON.parse(txt)}catch(_){throw new Error('Máy chủ trả về nội dung lạ (HTTP '+res.status+') — hãy Deploy lại Apps Script phiên bản mới')}
     if(x&&x.conflict)conflict=true;
@@ -3357,7 +3372,8 @@ function cloudStatus(t,kind){
   let el=document.getElementById('cloud-sync-status');
   if(!el){el=document.createElement('div');el.id='cloud-sync-status';el.title='Bấm để đồng bộ ngay';el.style.cssText='position:fixed;bottom:8px;right:8px;z-index:99999;padding:7px 10px;border-radius:8px;font:12px Arial;box-shadow:0 2px 8px #0002;cursor:pointer;max-width:420px';el.onclick=()=>{CLOUD_DIRTY&&CLOUD_SESSION?cloudPush():cloudGet(true)};document.body.appendChild(el)}
   el.style.background=kind==='err'?'#fde8e8':kind==='ok'?'#e9f6ec':'#eef2f7';el.style.color=kind==='err'?'#a32828':kind==='ok'?'#1d5b2e':'#234';
-  el.textContent='Đồng bộ: '+t;
+  const sv=CLOUD_LAST?' · bản trên máy chủ: '+new Date(CLOUD_LAST).toLocaleString('vi-VN'):'';
+  el.textContent='Đồng bộ (v'+CLOUD_VER+'): '+t+sv;
 }
 function cloudStart(){
   if(!cloudEnabled()){cloudStatus('Chưa cấu hình URL / KEY','err');return}
