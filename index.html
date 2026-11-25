@@ -324,6 +324,7 @@ table.nlt+table.nlt{margin-top:-1px}
 .nlt .yn{display:inline-block;min-width:17px;height:17px;line-height:15px;border-radius:50%;border:1.5px solid transparent;text-align:center;font-size:12px}
 .nlt .yn.on{border-color:#f00}
 #nlSheet.black .nlt .yn.on{border-color:#000}
+.nlt tr.scrap td:not([rowspan]){background:#ffff00}
 @media print{
  #nlSheet{display:block;page:nl}
  .nl-grp{display:block}
@@ -332,7 +333,7 @@ table.nlt+table.nlt{margin-top:-1px}
  .nl-page{border:0;box-shadow:none;width:100%;height:1040px;margin:0;padding:4px 16px 0;break-after:page;page-break-after:always}
  .nl-grp:last-child .nl-page:last-child{break-after:auto;page-break-after:auto}
  .nl-page .r[contenteditable]:focus{outline:none;background:none}
- .nlt tr.hd td,.nlt tr.gy td,.nlt td.gy{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .nlt tr.hd td,.nlt tr.gy td,.nlt td.gy,.nlt tr.scrap td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 @page nl{size:A4 portrait;margin:8mm}
 </style>
@@ -1562,10 +1563,10 @@ function nlHold(r,g){
   return L.join('\n');
 }
 /* tên file PDF: VF1026H21-VF1030Q26-VF1031T22 - E20-H - L6510RC-473T (61-68) — số trong ngoặc là số dòng ở Bảng tổng */
-function nlRanges(a){a=[...new Set(a)].sort((x,y)=>x-y);const o=[];let i=0;while(i<a.length){let j=i;while(j+1<a.length&&a[j+1]===a[j]+1)j++;o.push(j>i?a[i]+'-'+a[j]:String(a[i]));i=j+1}return o.join(', ')}
+function nlRanges(a){a=[...new Set(a)].sort((x,y)=>x-y);const o=[];let i=0;while(i<a.length){let j=i;while(j+1<a.length&&a[j+1]===a[j]+1)j++;o.push(j>i?a[i]+'-'+a[j]:String(a[i]));i=j+1}return o.join(',')}
 function nlFileName(codes,grades,recs){
   const by=new Map();recs.forEach(r=>{const p=String(r.product||'').trim();if(!p)return;if(!by.has(p))by.set(p,[]);const n=NL_NO.get(r.id);if(n)by.get(p).push(n)});
-  const prods=[...by.entries()].map(([p,ns])=>p+(ns.length?' ('+nlRanges(ns)+')':'')).join(', ');
+  const prods=[...by.entries()].map(([p,ns])=>p+(ns.length?' ('+nlRanges(ns)+')':'')).join(' & ');
   return [codes.join('-')||'chua co ma NL',grades.join('+')||'',prods].filter(Boolean).join(' - ').replace(/[\\\/:*?"<>|\r\n]+/g,'_');
 }
 /* dựng mô hình dữ liệu của một báo cáo */
@@ -1605,7 +1606,10 @@ function nlModel(g){
         hb=[0,1,2].map(i=>{const v=h.v[k*3+i],n=hdNum(v);return n!=null?nlFmtN(n):(v==null?'':String(v))});
         const tb=hdTB(h,k);avg=tb==null?'':String(Math.round(tb));
       }
-      rows.push({r,product:r.product||'',pcode:it.code||'',melt:r.melt||'',hold:nlHold(r,g),hb,avg});
+      /* Scrap: gõ "scrap" vào ô độ cứng hoặc ô ghi chú (tab Độ cứng sản phẩm / Bảng tổng) -> dòng bôi vàng */
+      const isS=x=>/scrap/i.test(String(x==null?'':x));
+      const scrap=hb.some(isS)||(h&&(h.n||[]).some(isS))||[r.pnote,r.note,r.note2].some(isS);
+      rows.push({r,product:r.product||'',pcode:it.code||'',melt:r.melt||'',hold:nlHold(r,g),hb,avg,scrap});
     });
   });
   if(rows.some(x=>x.hb[0]===''&&x.hb[1]===''&&x.hb[2]===''))warn.push('độ cứng (tab Độ cứng sản phẩm) của '+rows.filter(x=>x.hb[0]===''&&x.hb[1]===''&&x.hb[2]==='').length+' dòng');
@@ -1667,11 +1671,12 @@ function nlPartsHTML(M,a,b){
 <tr class="hd"><td colspan="4" class="inner"><table class="nlt mini"><colgroup><col style="width:17%"><col style="width:33%"><col style="width:24%"><col style="width:26%"></colgroup><tbody><tr class="hd"><td></td><td class="b">Grade<br>Mác thép</td><td class="b">Temper<br>Ram</td><td class="b">Range<br>Dải Độ cứng</td></tr>${gr}</tbody></table></td></tr>
 <tr class="hd sm"><td>1</td><td>2</td><td>3</td><td>Av</td></tr>`}
   rows.forEach((x,i)=>{const n=a+i+1;
-    s+=`<tr class="d"><td class="idx">${n}</td>`
+    s+=`<tr class="d${x.scrap?' scrap':''}"><td class="idx">${n}</td>`
       +(spP[i]?`<td rowspan="${spP[i]}">${nlR(x.product)}</td>`:'')+`<td>${nlR(x.pcode)}</td>`
       +(spM[i]?`<td rowspan="${spM[i]}">${nlR(x.melt)}</td>`:'')
       +(spH[i]?`<td rowspan="${spH[i]}" class="hold">${x.hold.split('\n').map(l=>nlR(l)).join('<br>')}</td>`:'')
-      +x.hb.map(v=>`<td class="hbv">${nlR(v)}</td>`).join('')+`<td class="hbv avg">${nlR(x.avg)}</td></tr>`});
+      +(x.scrap&&!x.hb.some(v=>v!==''&&!isNaN(Number(v)))?`<td class="hbv" colspan="4">${nlR(x.hb.find(v=>v!=='')||'SCRAP')}</td>`
+        :x.hb.map(v=>`<td class="hbv">${nlR(v)}</td>`).join('')+`<td class="hbv avg">${nlR(x.avg)}</td>`)+'</tr>'});
   return s+'</tbody></table>';
 }
 const nlHead=()=>`<table class="nlt hdr"><colgroup><col style="width:17%"><col style="width:59%"><col style="width:24%"></colgroup><tbody><tr><td rowspan="2" class="lg"><img src="${REP_LOGO}" alt="logo"></td><td rowspan="2" class="tt">GET and Rigging Heat Treatment Record Sheet<br>Bảng ghi chép Xử lý nhiệt cho GET và Rigging</td><td class="did">Doc ID: <b>FRM-0606</b><br>Mã tài liệu</td></tr><tr><td class="did">Version: 1.0<br>Phiên bản</td></tr></tbody></table>`;
