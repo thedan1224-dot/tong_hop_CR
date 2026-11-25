@@ -1730,6 +1730,9 @@ function nlInit(){
   bind('nl-qc','qc');bind('nl-cr','cr');bind('nl-date','date');bind('nl-agit','agit');bind('nl-cool','cool');bind('nl-tray','tray');
   $('nl-red').onchange=()=>{NL_OPT.red=$('nl-red').checked;nlSave();$('nlSheet').classList.toggle('black',!NL_OPT.red)};
   $('btn-sel-nl').onclick=exportNLFromList;
+  /* gõ "scrap" trực tiếp vào ô đỏ trên biểu mẫu -> dòng tự bôi vàng (xóa chữ scrap thì hết vàng) */
+  $('nlSheet').addEventListener('input',e=>{const tr=e.target.closest&&e.target.closest('tr.d');if(!tr||!tr.querySelector('td.idx'))return;
+    tr.classList.toggle('scrap',[...tr.querySelectorAll('.r')].some(x=>/scrap/i.test(x.textContent)))});
   $('nl-back').onclick=()=>showPage('list');
   $('nl-print').onclick=()=>{if(!NL_IDS.length){alert('Chưa có báo cáo để in.');return}
     const old=document.title,g=document.querySelector('#nlSheet .nl-grp');if(g)document.title=g.dataset.name;
