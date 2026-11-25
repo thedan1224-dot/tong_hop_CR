@@ -277,7 +277,7 @@ header img.logo{height:40px;width:auto;display:block;border-radius:4px}
 .nl-cap{width:100%;max-width:733px;font-size:12px;color:var(--mut)}
 .nl-cap b{color:var(--navy)}
 .nl-warn{background:#fff6dd;border:1px solid #e8c766;color:#7a5400;border-radius:6px;padding:5px 8px;margin-top:4px}
-.nl-page{width:733px;height:1040px;background:#fff;border:1px solid #b9c3d1;box-shadow:0 2px 8px rgba(20,30,45,.1);padding:6px;display:flex;flex-direction:column;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;color:#000;overflow:hidden}
+.nl-page{width:733px;height:1040px;background:#fff;border:1px solid #b9c3d1;box-shadow:0 2px 8px rgba(20,30,45,.1);padding:10px 22px 8px;display:flex;flex-direction:column;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;color:#000;overflow:hidden}
 .nl-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 .nl-body>*{flex:none}
 table.nlt{width:100%;border-collapse:collapse;table-layout:fixed;margin:0;font-size:10.5px}
@@ -304,7 +304,7 @@ table.nlt+table.nlt{margin-top:-1px}
 .nlt.parts tr.hd td{font-size:11px}
 .nlt.parts tr.d td{height:25px}
 .nlt.parts td.idx{font-size:11px;font-weight:400}
-.nlt.parts td.hold{text-align:left;padding-left:8px;font-size:11px;line-height:1.4}
+.nlt.parts td.hold{text-align:left;padding-left:5px;font-size:11px;line-height:1.4}
 .nlt.parts td.hbv{font-size:12.5px}
 .nlt.parts td.avg{font-weight:700}
 .nlt td.inner{padding:0;border-left:1px solid #000}
@@ -329,7 +329,7 @@ table.nlt+table.nlt{margin-top:-1px}
  .nl-grp{display:block}
  .nl-cap{display:none!important}
  #toast{display:none!important}
- .nl-page{border:0;box-shadow:none;width:100%;height:1040px;margin:0;padding:0;break-after:page;page-break-after:always}
+ .nl-page{border:0;box-shadow:none;width:100%;height:1040px;margin:0;padding:4px 16px 0;break-after:page;page-break-after:always}
  .nl-grp:last-child .nl-page:last-child{break-after:auto;page-break-after:auto}
  .nl-page .r[contenteditable]:focus{outline:none;background:none}
  .nlt tr.hd td,.nlt tr.gy td,.nlt td.gy{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -1549,9 +1549,9 @@ function nlMes(g){
   return [...s].sort((a,b)=>a-b);
 }
 /* giá trị thông số của nhóm (cột c của Bảng tổng, tự lấy cả từ tab Thông số lò NL): xếp theo mẻ, "28.2 / 30.2" */
-function nlVal(g,c,unit){
+function nlVal(g,c,unit,ceil){
   const toks=[];[...g.recs].sort((a,b)=>nlMeOf(a)-nlMeOf(b)).forEach(r=>{
-    String(procEff(r,c)||'').split('/').forEach(x=>{x=x.trim();if(x&&!toks.includes(x))toks.push(x)})});
+    String(procEff(r,c)||'').split('/').forEach(x=>{x=x.trim();if(ceil){const n=fNum(x);if(n!=null)x=String(Math.ceil(n-1e-9))}if(x&&!toks.includes(x))toks.push(x)})});
   return toks.length?toks.join(' / ')+(unit?' '+unit:''):'';
 }
 function nlHold(r,g){
@@ -1578,13 +1578,28 @@ function nlModel(g){
     if(g.t&&(!qe||!qe.bd||!qe.kt))warn.push('giờ vào/ra lò tôi '+g.t+lb);
     if(g.r&&(!re||!re.bd||!re.kt))warn.push('giờ vào/ra lò ram '+g.r+lb);
   });
-  const cond={wb:nlVal(g,25,'°C'),wa:nlVal(g,26,'°C'),rec:nlVal(g,27,'°C'),oven:nlVal(g,31,'°C'),
-    tq:nlVal(g,28,'sec'),tt:nlVal(g,30,'minutes'),tank:nlVal(g,29,'minutes')};
+  const cond={wb:nlVal(g,25,'°C'),wa:nlVal(g,26,'°C'),rec:nlVal(g,27,'°C',1),oven:nlVal(g,31,'°C'),
+    tq:nlVal(g,28,'sec',1),tt:nlVal(g,30,'minutes'),tank:nlVal(g,29,'minutes')};
   [['wb','nhiệt nước trước tôi'],['wa','nhiệt nước sau tôi'],['rec','nhiệt độ phục hồi'],['oven','nhiệt độ lò ram ban đầu'],['tq','thời gian chuyển sang bể tôi'],['tt','thời gian chuyển sang lò ram'],['tank','thời gian trong bể tôi']]
     .forEach(([k,n])=>{if(!cond[k])warn.push(n)});
-  const rows=g.recs.map(r=>({r,product:r.product||'',pcode:r.pcode||'',melt:r.melt||'',hold:nlHold(r,g),
-    hb:[0,1,2].map(i=>nlFmtN((r.hb||[])[i])),avg:(()=>{const a=mean(r.hb||[]);return a==null?'':String(Math.round(a))})()}));
-  if(rows.some(x=>x.hb[0]===''&&x.hb[1]===''&&x.hb[2]===''))warn.push('độ cứng của '+rows.filter(x=>x.hb[0]===''&&x.hb[1]===''&&x.hb[2]==='').length+' dòng');
+  /* độ cứng lấy từ tab "Độ cứng sản phẩm": mỗi mã sản phẩm (kể cả dải 121→126) một dòng; lấy đúng lần nhiệt luyện theo mã NL */
+  const rows=[];
+  g.recs.forEach(r=>{
+    const code=htOf(r);
+    hdExpand(r).forEach(it=>{
+      const h=HARD.find(x=>x.rid===r.id&&x.num===it.num);
+      let hb=['','',''],avg='';
+      if(h){
+        const has=k=>[0,1,2].some(i=>hdNum(h.v[k*3+i])!=null);
+        let k=h.ht.findIndex(x=>x&&U(x)===U(code));if(k<0)k=0;
+        if(!has(k)){for(let j=3;j>=0;j--)if(has(j)){k=j;break}}
+        hb=[0,1,2].map(i=>{const v=h.v[k*3+i],n=hdNum(v);return n!=null?nlFmtN(n):(v==null?'':String(v))});
+        const tb=hdTB(h,k);avg=tb==null?'':String(Math.round(tb));
+      }
+      rows.push({r,product:r.product||'',pcode:it.code||'',melt:r.melt||'',hold:nlHold(r,g),hb,avg});
+    });
+  });
+  if(rows.some(x=>x.hb[0]===''&&x.hb[1]===''&&x.hb[2]===''))warn.push('độ cứng (tab Độ cứng sản phẩm) của '+rows.filter(x=>x.hb[0]===''&&x.hb[1]===''&&x.hb[2]==='').length+' dòng');
   if(rows.some(x=>!x.pcode))warn.push('mã sản phẩm (Casting Number)');
   const grades=[...new Set(g.recs.map(r=>String(r.grade||'').trim().toUpperCase()).filter(Boolean))];
   const codes=[g.ha,g.u,g.t,g.r].filter(Boolean);
