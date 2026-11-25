@@ -271,6 +271,70 @@ table.auto tr.fpsel td{background:#e8f1ff}
 header img.logo{height:40px;width:auto;display:block;border-radius:4px}
 #loginOv img.logo{width:170px;height:auto;display:block;margin:0 auto 12px}
 #loginOv h2{text-align:center}
+/* ===== Báo cáo nhiệt luyện (FRM-0606) ===== */
+#nlSheet{display:flex;flex-direction:column;align-items:center;gap:18px}
+.nl-grp{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+.nl-cap{width:100%;max-width:733px;font-size:12px;color:var(--mut)}
+.nl-cap b{color:var(--navy)}
+.nl-warn{background:#fff6dd;border:1px solid #e8c766;color:#7a5400;border-radius:6px;padding:5px 8px;margin-top:4px}
+.nl-page{width:733px;height:1040px;background:#fff;border:1px solid #b9c3d1;box-shadow:0 2px 8px rgba(20,30,45,.1);padding:6px;display:flex;flex-direction:column;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;color:#000;overflow:hidden}
+.nl-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.nl-body>*{flex:none}
+table.nlt{width:100%;border-collapse:collapse;table-layout:fixed;margin:0;font-size:10.5px}
+table.nlt+table.nlt{margin-top:-1px}
+.nlt td{border:1px solid #000;padding:2px 4px;text-align:center;vertical-align:middle;font-size:10.5px;line-height:1.25;white-space:normal;word-break:break-word;overflow:hidden;color:#000}
+.nlt tr:hover{background:none}
+.nlt tr.hd td,.nlt tr.gy td,.nlt td.gy{background:#d9d9d9}
+.nlt tr.sm td{font-size:9px;line-height:1.2}
+.nlt tr.d td{font-size:12.5px}
+.nlt .n{font-weight:400;font-size:9.5px}.nlt .b{font-weight:700}
+.nlt td.c{font-size:10px}
+.nlt.hdr{margin-bottom:6px}
+.nlt.hdr td{padding:2px 6px}
+.nlt.hdr .lg img{width:74px;display:block;margin:0 auto}
+.nlt.hdr .tt{font-weight:700;font-size:15px;line-height:1.35}
+.nlt.hdr .did{text-align:left;font-size:10.5px;line-height:1.25}
+.nlt.top{border:2px solid #000}
+.nlt.top tr.hd td{font-size:11px;line-height:1.2;height:40px}
+.nlt.top tr.d td{height:24px}
+.nlt.top td.lab2{font-size:11px;line-height:1.15}
+.nlt.cond tr.d td{height:26px}
+.nlt.cond tr.d.tall td{height:26px}
+.nlt.cond tr.gy td{height:28px}
+.nlt.parts tr.hd td{font-size:11px}
+.nlt.parts tr.d td{height:25px}
+.nlt.parts td.idx{font-size:11px;font-weight:400}
+.nlt.parts td.hold{text-align:left;padding-left:8px;font-size:11px;line-height:1.4}
+.nlt.parts td.hbv{font-size:12.5px}
+.nlt.parts td.avg{font-weight:700}
+.nlt td.inner{padding:0;border-left:1px solid #000}
+.nlt.mini{margin:-1px 0 -1px -1px;width:calc(100% + 1px)}
+.nlt.mini td{font-size:8.5px;padding:0 1px;line-height:1.1;height:14px;border-top-width:0}
+.nlt.mini tr.hd td{height:30px;font-size:9px}
+.nlt.mini td.ck{font-size:11px}
+.nlt.sign td{font-size:10.5px;line-height:1.3;padding:3px 4px}
+.nlt.sign tr.d td{font-size:11.5px;height:38px}
+.nlt.sign td.b{font-size:11px}
+.nlt.foot{margin-top:6px}
+.nlt.foot td{font-size:8px;text-align:left;padding:2px 4px;height:16px;line-height:1.15}
+.nlt.foot td.pg{text-align:center;vertical-align:middle;font-size:9px}
+.nlt td .r,.nlt .r{color:#f00}
+#nlSheet.black .nlt td .r,#nlSheet.black .nlt .r{color:#000}
+.nl-page .r[contenteditable]:focus{outline:1px dashed #3a7bd5;background:#eef5ff}
+.nlt .yn{display:inline-block;min-width:17px;height:17px;line-height:15px;border-radius:50%;border:1.5px solid transparent;text-align:center;font-size:12px}
+.nlt .yn.on{border-color:#f00}
+#nlSheet.black .nlt .yn.on{border-color:#000}
+@media print{
+ #nlSheet{display:block;page:nl}
+ .nl-grp{display:block}
+ .nl-cap{display:none!important}
+ #toast{display:none!important}
+ .nl-page{border:0;box-shadow:none;width:100%;height:1040px;margin:0;padding:0;break-after:page;page-break-after:always}
+ .nl-grp:last-child .nl-page:last-child{break-after:auto;page-break-after:auto}
+ .nl-page .r[contenteditable]:focus{outline:none;background:none}
+ .nlt tr.hd td,.nlt tr.gy td,.nlt td.gy{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@page nl{size:A4 portrait;margin:8mm}
 </style>
 </head>
 <body>
@@ -283,6 +347,7 @@ header img.logo{height:40px;width:auto;display:block;border-radius:4px}
   <button data-p="check">Kiểm tra đạt/không đạt</button>
   <button data-p="tem">In tem NBT</button>
   <button data-p="rep">Báo cáo cơ tính</button>
+  <button data-p="nl">Báo cáo NL</button>
   <button data-p="prod">Thông số nhiệt luyện</button>
   <button data-p="furn">Thông số lò NL</button>
   <button data-p="data">Dữ liệu</button>
@@ -358,6 +423,7 @@ header img.logo{height:40px;width:auto;display:block;border-radius:4px}
    <button class="btn" id="btn-copy-all" title="Sao chép toàn bộ các dòng đang lọc (kèm tiêu đề cột) để dán vào Excel">Sao chép cả bảng</button>
    <button class="btn" id="btn-sel-tem">In tem cho các dòng đã chọn →</button>
    <button class="btn pri" id="btn-sel-rep" title="Tick chọn dòng (hoặc bôi chọn vùng) rồi bấm để mở biểu mẫu FRM-0605 trong tab Báo cáo cơ tính">📄 Xuất báo cáo cơ tính →</button>
+   <button class="btn pri" id="btn-sel-nl" title="Tick chọn dòng (hoặc bôi chọn vùng) rồi bấm để mở biểu mẫu FRM-0606 trong tab Báo cáo NL (nhiệt luyện)">🔥 Xuất báo cáo NL →</button>
    <span class="legend" style="margin:0 0 0 8px;align-self:center"><span class="badge b-ok">Approved</span> <span class="badge b-bad">Reject</span> <span class="badge b-warn">Retest</span> <span class="badge" style="background:#ece3f8;color:#5a2fa0">Quarantined</span> <span class="badge b-info">Pending approval</span></span>
    <span class="muted" id="f-count" style="margin-left:auto;align-self:center"></span>
   </div>
@@ -471,6 +537,24 @@ header img.logo{height:40px;width:auto;display:block;border-radius:4px}
  <div class="card noprint" id="repFiles" style="display:none"></div>
  <div class="card noprint" id="repLinks" style="display:none"></div>
  <div id="repSheet"></div>
+</section>
+<section id="p-nl" class="page">
+ <div class="card noprint" id="nlCtl">
+  <h3>Báo cáo nhiệt luyện — GET and Rigging Heat Treatment Record Sheet (FRM-0606)</h3>
+  <div class="row">
+   <label>Giám sát QC (QC Inspector)<input id="nl-qc" style="width:170px" placeholder="VD: Lê Thế Dân"></label>
+   <label>Đại diện CR (CR Representative)<input id="nl-cr" style="width:170px" placeholder="VD: Đỗ Xuân Đạt"></label>
+   <label>Ngày ký<input id="nl-date" style="width:110px" placeholder="dd/mm/yyyy"></label>
+   <label>Máy khuấy đã bật<select id="nl-agit"><option>Y</option><option>N</option></select></label>
+   <label>Tháp làm mát chạy trước tôi<select id="nl-cool"><option>Y</option><option>N</option></select></label>
+   <label>Khay xếp đúng ảnh mẫu<select id="nl-tray"><option>Y</option><option>N</option></select></label>
+   <label style="flex-direction:row;align-items:center;gap:6px;margin-top:18px"><input type="checkbox" id="nl-red"> Chữ dữ liệu màu đỏ như file mẫu</label>
+   <div class="toolbar" style="margin-top:14px"><button class="btn pri" id="nl-print">🖨 In / Lưu PDF</button><button class="btn" id="nl-back">← Quay lại Bảng tổng</button></div>
+  </div>
+  <div class="hint" id="nl-info"></div>
+  <div class="hint">Trong <b>Bảng tổng</b>, tick chọn các dòng (hoặc bôi chọn vùng ô) rồi bấm <b>🔥 Xuất báo cáo NL →</b>: phần mềm tự nhảy sang tab này. Các dòng được <b>nhóm theo bộ mã nhiệt luyện</b> (Hóa già – Ủ – Tôi – Ram); mỗi nhóm là một báo cáo, tự chia trang A4. Dữ liệu lấy từ Bảng tổng (sản phẩm, mã sản phẩm, Melt No, độ cứng, thời gian giữ, nhiệt nước, nhiệt độ phục hồi, thời gian di chuyển…) và từ tab <b>Thông số lò NL</b> (giờ vào / ra lò từng mã). Nếu mã Tôi có hậu tố <b>-1 / -2</b> hoặc biểu đồ nhiệt có 2 mẻ thì báo cáo tự thêm dòng Tôi / Ram cho từng mẻ và các số liệu dạng "mẻ 1 / mẻ 2"; chỉ 1 mẻ thì chỉ hiện 1 dòng. Có thể <b>gõ trực tiếp vào ô đỏ</b> để sửa trước khi in (chỉnh sửa này không lưu lại). Khi in, chọn khổ A4 dọc, tỉ lệ 100%, bỏ chọn "Đầu trang và chân trang"; chọn "Lưu dưới dạng PDF" để tạo file.</div>
+ </div>
+ <div id="nlSheet"></div>
 </section>
 <section id="p-prod" class="page">
  <div class="card">
@@ -1018,7 +1102,7 @@ function showPage(p){if(!auSee(p)){toast('Bạn không có quyền xem mục nà
   if(p==='hard'&&!$('p-hard').classList.contains('on')){HD_PAGE=1e9;HD_GO_END=true}
   if(p==='furn'&&!$('p-furn').classList.contains('on')){FPAGE=1e9;FGO_END=true}
   if(p!=='list'&&document.body.classList.contains('wide')){document.body.classList.remove('wide');const b=document.getElementById('btn-wide');if(b)b.textContent='⤢ Mở rộng bảng'}document.querySelectorAll('.page').forEach(e=>e.classList.toggle('on',e.id==='p-'+p));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
-  ({dash:renderDash,list:renderList,check:renderCheck,tem:renderTem,rep:renderReport,prod:renderProd,data:renderData,hard:renderHard,furn:renderFurn,users:renderUsers})[p]();window.scrollTo(0,0)}
+  ({dash:renderDash,list:renderList,check:renderCheck,tem:renderTem,rep:renderReport,nl:renderNL,prod:renderProd,data:renderData,hard:renderHard,furn:renderFurn,users:renderUsers})[p]();window.scrollTo(0,0)}
 function refresh(){showPage(document.querySelector('.page.on').id.slice(2))}
 function renderDash(){
   fillSelect($('d-grade'),allGrades(),'Tất cả mác',true);yearOptions($('d-year'));
@@ -1057,8 +1141,8 @@ const PSsaved=k=>{try{const v=+localStorage.getItem(LS+k);return [100,200,300].i
 let page=1e9,GO_END=true,selected=new Set(),PS=PSsaved('_ps_main');
 const ACT_W=128,TOPS=[0,28,56,84,124],RH=[28,28,28,40,30];
 /* độ rộng tối thiểu / tối đa theo cột (px); độ rộng thực tế = đo theo nội dung dài nhất trong cột, nhưng không hẹp hơn tiêu đề cột (tiêu đề xuống tối đa 3 dòng) */
-const MINW=[60,60,40,40,56,56,56,60,100,56,56,56,56,56,34,34,34,34,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,60,40,40,40,42,40,40,40,42,40,40,40,42,60,60,60];
-const MAXW=[110,180,100,72,150,120,120,130,200,220,150,150,150,150,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,100,60,60,60,60,60,60,60,60,60,60,60,60,180,240,130];
+const MINW=[60,92,64,40,56,56,56,60,100,56,56,56,56,56,34,34,34,34,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,60,40,40,40,42,40,40,40,42,40,40,40,42,60,60,60];
+const MAXW=[110,250,130,72,150,120,120,130,200,220,150,150,150,150,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,100,60,60,60,60,60,60,60,60,60,60,60,60,180,240,130];
 let GW=MINW.slice();
 /* ẩn / hiện cột bảng Tổng (lưu trong trình duyệt) */
 let HID=(()=>{try{return new Set(JSON.parse(localStorage.getItem(LS+'_hid')||'[]'))}catch(e){return new Set()}})();
@@ -1102,7 +1186,7 @@ function computeGW(){
     const w=c===8?wrap2W(v,TFONT_S):textWf(v,c===7||c===48?TFONT_B:TFONT);if(w>mx[c])mx[c]=w}});
   return MINW.map((mn,c)=>{
     /* phần đệm: chữ cách viền 4px mỗi bên + viền; ô Ngày đúc / Mã sản phẩm có thêm nút 📅 / ＋ bên phải */
-    const need=mx[c]?mx[c]+(c===0||c===4?27:c===8?11:c===7?12:14):0;
+    const need=mx[c]?mx[c]+(c===0||c===4?27:c===8?11:c===7?12:c===1||c===2?28:14):0;
     return Math.round(Math.min(MAXW[c],Math.max(mn,GW_HDR[c]?hdrW(GW_HDR[c],3):0,GW_VHDR[c]?vhdrW(GW_VHDR[c]):0,need)))});
 }
 /* ===== Tự động lấy thông số lò (tab "Thông số lò NL") đưa vào các cột nhiệt luyện của Bảng tổng ===== */
@@ -1430,6 +1514,199 @@ function exportReportFromList(){
   rows.forEach(r=>{const k=U(r.melt)+'|'+U(r.bar);if(r.bar&&seen.has(k))return;seen.add(k);ids.push(r.id)});
   REP_IDS=ids;showPage('rep');
 }
+/* ===== Báo cáo nhiệt luyện (biểu mẫu FRM-0606 — GET and Rigging Heat Treatment Record Sheet) ===== */
+let NL_IDS=[];
+const NL_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const NL_TEMPER={'E20-HT':'605','E20-H':'200','E20-A':'200','E28C-H':'200','E28C-A':'200'};
+const NL_RANGE={'E20-HT':'286-321','E20-H':'387-460','E20-A':'387-460','E28C-H':'460-540','E28C-A':'460-540'};
+const NL_OPT=(()=>{const d={qc:'Lê Thế Dân',cr:'Đỗ Xuân Đạt',date:'',agit:'Y',cool:'Y',tray:'Y',red:true};
+  try{Object.assign(d,JSON.parse(localStorage.getItem(LS+'_nl')||'{}'))}catch(e){}return d})();
+const nlSave=()=>{try{localStorage.setItem(LS+'_nl',JSON.stringify(NL_OPT))}catch(e){}};
+const nlToday=()=>{const d=new Date(),z=n=>String(n).padStart(2,'0');return z(d.getDate())+'/'+z(d.getMonth()+1)+'/'+d.getFullYear()};
+const nlIsoVN=iso=>{const m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?m[3]+'/'+m[2]+'/'+m[1]:''};
+/* 2026-10-04T11:14 -> 11:14 October 04, 2026 */
+function nlDT(s){const m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);return m?`${m[4]}:${m[5]} ${NL_MONTHS[+m[2]-1]} ${m[3]}, ${m[1]}`:''}
+/* số lò = các chữ số cuối của mã nhiệt luyện (VF1004H27 -> 27) */
+const nlStove=c=>{const m=String(c||'').match(/[A-Za-z](\d+)$/);return m?m[1]:''};
+const nlMeOf=r=>{const tc=fClean((r.ht||[])[2]);return tc?lotSplit(tc).me:1};
+const nlFmtN=n=>n==null||n===''||!isFinite(n)?'':(Number.isInteger(+n)?String(+n):(+n).toFixed(1));
+
+/* nhóm các dòng đã chọn theo bộ mã nhiệt luyện (Hóa già – Ủ – Tôi (bỏ hậu tố mẻ) – Ram): mỗi nhóm = 1 báo cáo */
+function nlGroups(recs){
+  const map=new Map();
+  recs.forEach(r=>{const ht=r.ht||[],tc=fClean(ht[2]),tb=tc?lotSplit(tc).base:'';
+    const key=[fClean(ht[0]),fClean(ht[1]),tb,fClean(ht[3])].map(U).join('|');
+    let g=map.get(key);if(!g){g={key,ha:fClean(ht[0]),u:fClean(ht[1]),t:tb,r:fClean(ht[3]),recs:[]};map.set(key,g)}
+    g.recs.push(r)});
+  return [...map.values()];
+}
+/* danh sách mẻ của nhóm: Tôi có hậu tố -1/-2 thì đúng mẻ đó; không có hậu tố mà biểu đồ nhiệt ghi nhiều mẻ thì liệt kê đủ */
+function nlMes(g){
+  const s=new Set();
+  g.recs.forEach(r=>{const tc=fClean((r.ht||[])[2]);if(!tc){s.add(1);return}
+    const ts=lotSplit(tc);if(/-\d+$/.test(tc))s.add(ts.me);
+    else{s.add(1);for(let m=2;m<=4;m++)if(FD['t|'+U(ts.base)+'|'+m])s.add(m)}});
+  return [...s].sort((a,b)=>a-b);
+}
+/* giá trị thông số của nhóm (cột c của Bảng tổng, tự lấy cả từ tab Thông số lò NL): xếp theo mẻ, "28.2 / 30.2" */
+function nlVal(g,c,unit){
+  const toks=[];[...g.recs].sort((a,b)=>nlMeOf(a)-nlMeOf(b)).forEach(r=>{
+    String(procEff(r,c)||'').split('/').forEach(x=>{x=x.trim();if(x&&!toks.includes(x))toks.push(x)})});
+  return toks.length?toks.join(' / ')+(unit?' '+unit:''):'';
+}
+function nlHold(r,g){
+  const hr=c=>{const s=String(procEff(r,c)||'').trim();if(!s)return '';return s.split('/').map(x=>{const n=fNum(x);return n==null?x.trim():n.toFixed(1)}).join(' / ')};
+  const L=[],add=(lab,c,has)=>{const v=hr(c);if(v||has)L.push(lab+': '+(v||'-')+' hr')};
+  add('Age',18,!!g.ha);add('Homogenise',20,!!g.u);add('Quench',23,!!g.t);add('Temper',32,!!g.r);
+  return L.join('\n');
+}
+/* dựng mô hình dữ liệu của một báo cáo */
+function nlModel(g){
+  const mes=nlMes(g),warn=[],fdt=(type,code,me)=>code?(FD[type+'|'+U(code)+(me?'|'+me:'')]||null):null;
+  const ha=fdt('ha',g.ha),u=fdt('u',g.u);
+  const ht=[];
+  ht.push({en:'Age',vi:'Hóa già',code:g.ha||'-',stove:nlStove(g.ha)||'-',in:ha?nlDT(ha.bd):'-',out:ha?nlDT(ha.kt):'-'});
+  ht.push({en:'Homogenise',vi:'Ủ',code:g.u||'-',stove:nlStove(g.u)||'-',in:u?nlDT(u.bd):'',out:u?nlDT(u.kt):''});
+  if(g.u&&(!u||!u.bd||!u.kt))warn.push('giờ vào/ra lò ủ '+g.u);
+  if(g.ha&&(!ha||!ha.bd||!ha.kt))warn.push('giờ vào/ra lò hóa già '+g.ha);
+  const q=[],t=[];
+  mes.forEach(m=>{
+    const qe=fdt('t',g.t,m),re=g.r?fdt('r',g.r,g.t?m:1):null;
+    q.push({code:g.t||'-',stove:nlStove(g.t)||'-',in:qe?nlDT(qe.bd):'',out:qe?nlDT(qe.kt):''});
+    t.push({code:g.r||'-',stove:nlStove(g.r)||'-',in:re?nlDT(re.bd):'',out:re?nlDT(re.kt):''});
+    const lb=mes.length>1?' mẻ '+m:'';
+    if(g.t&&(!qe||!qe.bd||!qe.kt))warn.push('giờ vào/ra lò tôi '+g.t+lb);
+    if(g.r&&(!re||!re.bd||!re.kt))warn.push('giờ vào/ra lò ram '+g.r+lb);
+  });
+  const cond={wb:nlVal(g,25,'°C'),wa:nlVal(g,26,'°C'),rec:nlVal(g,27,'°C'),oven:nlVal(g,31,'°C'),
+    tq:nlVal(g,28,'sec'),tt:nlVal(g,30,'minutes'),tank:nlVal(g,29,'minutes')};
+  [['wb','nhiệt nước trước tôi'],['wa','nhiệt nước sau tôi'],['rec','nhiệt độ phục hồi'],['oven','nhiệt độ lò ram ban đầu'],['tq','thời gian chuyển sang bể tôi'],['tt','thời gian chuyển sang lò ram'],['tank','thời gian trong bể tôi']]
+    .forEach(([k,n])=>{if(!cond[k])warn.push(n)});
+  const rows=g.recs.map(r=>({r,product:r.product||'',pcode:r.pcode||'',melt:r.melt||'',hold:nlHold(r,g),
+    hb:[0,1,2].map(i=>nlFmtN((r.hb||[])[i])),avg:(()=>{const a=mean(r.hb||[]);return a==null?'':String(Math.round(a))})()}));
+  if(rows.some(x=>x.hb[0]===''&&x.hb[1]===''&&x.hb[2]===''))warn.push('độ cứng của '+rows.filter(x=>x.hb[0]===''&&x.hb[1]===''&&x.hb[2]==='').length+' dòng');
+  if(rows.some(x=>!x.pcode))warn.push('mã sản phẩm (Casting Number)');
+  const grades=[...new Set(g.recs.map(r=>String(r.grade||'').trim().toUpperCase()).filter(Boolean))];
+  const codes=[g.ha,g.u,g.t,g.r].filter(Boolean);
+  return {g,mes,ht,q,t,cond,rows,grades,warn,
+    name:'FRM-0606 - '+(codes.join('-')||'chua co ma NL')+' - '+(grades.join('+')||'?')+' - '+[...new Set(rows.map(x=>x.product).filter(Boolean))].join(', ')};
+}
+/* chia dòng vào các trang A4: trang 1 chứa phần đầu biểu mẫu nên ít dòng hơn; trang cuối chừa chỗ cho phần ký tên.
+   Số dòng mỗi loại trang được tự giảm cho đến khi không còn tràn trang (đo thật trên màn hình, nên đúng với mọi font / trình duyệt) */
+function nlParams(mes){return {only:Math.max(3,9-2*(mes-1)),more:Math.max(3,11-2*(mes-1)),pn:30,plast:26}}
+function nlPaginate(n,P){
+  if(n<=P.only)return [[0,n]];
+  const pages=[],t1=Math.min(P.more,n-1);pages.push([0,t1]);let i=t1;
+  while(n-i>P.plast){const take=Math.min(P.pn,n-i-1);pages.push([i,i+take]);i+=take}
+  pages.push([i,n]);return pages;
+}
+const nlE=esc;
+const nlR=(txt,bind)=>`<span class="r"${bind?' data-nl="'+bind+'"':''} contenteditable="true" spellcheck="false">${nlE(txt)}</span>`;
+function nlYN(key,val){const o=v=>`<span class="yn${val===v?' on':''}" data-yn="${key}" data-v="${v}">${v}</span>`;return `<span class="r ynw">${o('Y')}/${o('N')}</span>`}
+/* ô cho phép gộp khi mọi dòng giống nhau (vd. giờ vào lò tôi của 2 mẻ cùng một lúc) */
+function nlMerge(rows,key,cls){
+  const same=rows.length>1&&rows.every(x=>x[key]===rows[0][key]);
+  return rows.map((x,i)=>same?(i?'':`<td rowspan="${rows.length}" class="${cls}">${nlR(x[key])}</td>`):`<td class="${cls}">${nlR(x[key])}</td>`);
+}
+function nlHtHTML(M){
+  const lab=(en,vi)=>`<td class="lab2 r"><span class="r" contenteditable="true" spellcheck="false">${nlE(en)}</span><br><span class="r" contenteditable="true" spellcheck="false">${nlE(vi)}</span></td>`;
+  let s=`<table class="nlt top"><colgroup><col style="width:21%"><col style="width:17%"><col style="width:8%"><col style="width:27%"><col style="width:27%"></colgroup><tbody>
+<tr class="hd"><td>HEAT TREATMENT<br>Xử lý nhiệt</td><td>HEAT TREATMENT OR LOAD NUMBER<br>Mã số xử lý nhiệt</td><td>STOVE NUMBER<br>Mã số lò</td><td>DATE/TIME IN<br>Ngày/giờ vào</td><td>DATE/TIME OUT<br>Ngày/giờ ra</td></tr>`;
+  M.ht.forEach(h=>{s+=`<tr class="d">${lab(h.en,h.vi)}<td>${nlR(h.code)}</td><td>${nlR(h.stove)}</td><td>${nlR(h.in)}</td><td>${nlR(h.out)}</td></tr>`});
+  const grp=(en,vi,rows)=>{const iIn=nlMerge(rows,'in','tdc'),iOut=nlMerge(rows,'out','tdc');
+    rows.forEach((x,i)=>{s+=`<tr class="d">`+(i?'':`<td rowspan="${rows.length}" class="lab2">${nlR(en)}<br>${nlR(vi)}</td><td rowspan="${rows.length}">${nlR(x.code)}</td><td rowspan="${rows.length}">${nlR(x.stove)}</td>`)+iIn[i]+iOut[i]+'</tr>'})};
+  grp('Quench','Tôi',M.q);grp('Temper','Ram',M.t);
+  return s+'</tbody></table>';
+}
+function nlCondHTML(M){
+  const c=M.cond;
+  return `<table class="nlt cond"><colgroup><col style="width:21%"><col style="width:17%"><col style="width:13%"><col style="width:12%"><col style="width:12%"><col style="width:25%"></colgroup><tbody>
+<tr class="gy"><td>AGITATORS TURNED ON<br>Máy khuấy đã được bật</td><td class="c">${nlYN('agit',NL_OPT.agit)} (circle/ khoanh tròn)</td><td colspan="2">COOLING TOWER RUNNING PRIOR TO QUENCH<br>Tháp làm mát chạy trước khi tôi</td><td colspan="2" class="c">${nlYN('cool',NL_OPT.cool)} (circle/ khoanh tròn)</td></tr>
+<tr class="gy sm"><td>TRAY LOADED AS PER PHOTO FOR THAT PRODUCT INCLUDING TEST BARS<br>Sản phẩm và thanh thử được xử lý nhiệt cùng nhau</td><td>WATER TEMP BEFORE QUENCH START (15°C - 26°C)<br>Nhiệt độ nước trước khi bắt đầu tôi (15°C - 26°C)</td><td colspan="4">WATER TEMP AFTER QUENCH COMPLETE &nbsp;(35°C MAX)<br>Nhiệt độ nước sau khi tôi xong (tối đa 35°C)</td></tr>
+<tr class="d"><td class="c">${nlYN('tray',NL_OPT.tray)} (circle/ khoanh tròn)</td><td>${nlR(c.wb)}</td><td colspan="4">${nlR(c.wa)}</td></tr>
+<tr class="gy sm"><td rowspan="3">RECOVERY TEMPERATURE<br>Nhiệt độ phục hồi</td><td rowspan="3">TEMPERING OVEN AT TEMPERATURE BEFORE PLACING CASTINGS IN OVEN – 150°C<br>Nhiệt độ lò ram trước khi đưa vật đúc vào lò - 150°C</td><td colspan="4">TRANSFER TIME FROM HT OVEN TO QUENCH TANK – MAX 60 sec<br>Thời gian chuyển từ lò xử lý nhiệt sang bể tôi – tối đa 60 giây</td></tr>
+<tr class="d"><td class="gy">QUENCH<br>Tôi</td><td>${nlR(c.tq)}</td><td class="gy">TEMPER<br>Ram</td><td>${nlR(c.tt)}</td></tr>
+<tr class="gy sm"><td colspan="4">MINUTES:SECONDS IN THE QUENCH TANK – FROM SUBMERGED, TO RAISED OUT WITH A STABLE RECOVERY TEMP.<br>Phút:giây trong bể làm nguội – từ khi vật đúc chìm xuống nước đến khi ra ngoài với nhiệt độ phục hồi ổn định</td></tr>
+<tr class="d tall"><td rowspan="2">${nlR(c.rec)}</td><td rowspan="2">${nlR(c.oven)}</td><td colspan="2" class="gy">QUENCH<br>Tôi</td><td colspan="2" class="gy">580°C TEMPER<br>580°C Ram</td></tr>
+<tr class="d"><td colspan="2">${nlR(c.tank)}</td><td colspan="2">${nlR('-')}</td></tr>
+</tbody></table>`;
+}
+function nlSpans(rows,key){const sp=[];let i=0;while(i<rows.length){let j=i+1;while(j<rows.length&&rows[j][key]===rows[i][key]&&rows[i][key]!=='')j++;sp[i]=j-i;for(let k=i+1;k<j;k++)sp[k]=0;i=j}return sp}
+function nlPartsHTML(M,a,b){
+  const rows=M.rows.slice(a,b),spP=nlSpans(rows,'product'),spM=nlSpans(rows,'melt'),spH=nlSpans(rows,'hold');
+  const gr=['E20-HT','E20-H','E20-A','E28C-H','E28C-A'].map(g=>{
+    const st=stdFor(g),rg=st&&st.hbMin!=null&&st.hbMin!==''&&st.hbMax!=null&&st.hbMax!==''?st.hbMin+'-'+st.hbMax:NL_RANGE[g];
+    return `<tr><td class="ck">${M.grades.includes(g)?'<span class="r">✓</span>':''}</td><td>${g}</td><td${g==='E20-HT'?' class="r"':''}>${NL_TEMPER[g]}<sup>o</sup>C</td><td>${rg}</td></tr>`}).join('');
+  let s=`<table class="nlt parts"><colgroup><col style="width:5%"><col style="width:13%"><col style="width:15%"><col style="width:14%"><col style="width:17%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:9%"></colgroup><tbody>`;
+  if(a===0){
+    s+=`<tr class="hd"><td rowspan="3"></td><td rowspan="3" class="b">Part # in Load<br><span class="n">Mã bộ phận đúc được xử lý trên mỗi lô</span></td><td rowspan="3" class="b">Casting Number<br><span class="n">Mã vật đúc</span></td><td rowspan="3" class="b">Melt Number<br><span class="n">Mã nấu luyện</span></td><td rowspan="3" class="b">Hold Times<br><span class="n">Thời gian giữ</span></td><td colspan="4" class="b">Hardness (HB)<br><span class="n">Độ cứng</span></td></tr>
+<tr class="hd"><td colspan="4" class="inner"><table class="nlt mini"><colgroup><col style="width:17%"><col style="width:33%"><col style="width:24%"><col style="width:26%"></colgroup><tbody><tr class="hd"><td></td><td class="b">Grade<br>Mác thép</td><td class="b">Temper<br>Ram</td><td class="b">Range<br>Dải Độ cứng</td></tr>${gr}</tbody></table></td></tr>
+<tr class="hd sm"><td>1</td><td>2</td><td>3</td><td>Av</td></tr>`}
+  rows.forEach((x,i)=>{const n=a+i+1;
+    s+=`<tr class="d"><td class="idx">${n}</td>`
+      +(spP[i]?`<td rowspan="${spP[i]}">${nlR(x.product)}</td>`:'')+`<td>${nlR(x.pcode)}</td>`
+      +(spM[i]?`<td rowspan="${spM[i]}">${nlR(x.melt)}</td>`:'')
+      +(spH[i]?`<td rowspan="${spH[i]}" class="hold">${x.hold.split('\n').map(l=>nlR(l)).join('<br>')}</td>`:'')
+      +x.hb.map(v=>`<td class="hbv">${nlR(v)}</td>`).join('')+`<td class="hbv avg">${nlR(x.avg)}</td></tr>`});
+  return s+'</tbody></table>';
+}
+const nlHead=()=>`<table class="nlt hdr"><colgroup><col style="width:17%"><col style="width:59%"><col style="width:24%"></colgroup><tbody><tr><td rowspan="2" class="lg"><img src="${REP_LOGO}" alt="logo"></td><td rowspan="2" class="tt">GET and Rigging Heat Treatment Record Sheet<br>Bảng ghi chép Xử lý nhiệt cho GET và Rigging</td><td class="did">Doc ID: <b>FRM-0606</b><br>Mã tài liệu</td></tr><tr><td class="did">Version: 1.0<br>Phiên bản</td></tr></tbody></table>`;
+const nlFoot=(p,n)=>`<table class="nlt foot"><colgroup><col style="width:23%"><col style="width:36%"><col style="width:26%"><col style="width:15%"></colgroup><tbody><tr><td><b>Effective Date:</b> &nbsp;12-Jan-21</td><td><b>Doc Owner:</b> &nbsp;Department Manager</td><td><b>Parent Doc ID:</b> &nbsp;PRO-0278</td><td rowspan="2" class="pg"><b>Pg. ${p} of ${n}</b></td></tr><tr><td><b>Division:</b> &nbsp;Australasia,Supply Chain</td><td><b>Department:</b> &nbsp;Global Manufacturing Development, Operations</td><td><b>Site:</b> &nbsp;Maryborough – QLD, China</td></tr></tbody></table>`;
+const nlSign=()=>`<table class="nlt sign"><colgroup><col style="width:20%"><col style="width:30%"><col style="width:22%"><col style="width:28%"></colgroup><tbody><tr><td colspan="4" class="b">All results must be reviewed and signed off by QC inspector and CR representative<br><span class="n">Tất cả các kết quả phải được giám sát QC và đại diện CR kiểm tra và ký tên</span></td></tr><tr class="d"><td>QC Inspector<br>Giám sát QC</td><td><span class="r" data-nl="qc" contenteditable="true" spellcheck="false">${nlE(NL_OPT.qc)}</span><br><span class="r" data-nl="date" contenteditable="true" spellcheck="false">${nlE(NL_OPT.date)}</span></td><td>CR Representative<br>Đại diện CR</td><td><span class="r" data-nl="cr" contenteditable="true" spellcheck="false">${nlE(NL_OPT.cr)}</span><br><span class="r" data-nl="date" contenteditable="true" spellcheck="false">${nlE(NL_OPT.date)}</span></td></tr></tbody></table>`;
+
+function nlGroupHTML(M,P){
+  const pages=nlPaginate(M.rows.length,P),N=pages.length;
+  const cap=`<div class="nl-cap noprint"><b>${nlE(M.name)}</b> · ${M.mes.length>1?M.mes.length+' mẻ tôi/ram':'1 mẻ'} · ${M.rows.length} sản phẩm${M.warn.length?`<div class="nl-warn">⚠ Chưa có dữ liệu: ${nlE([...new Set(M.warn)].join('; '))} — nhập thêm ở Bảng tổng / tab Thông số lò NL, hoặc gõ trực tiếp vào ô đỏ trên biểu mẫu trước khi in.</div>`:''}</div>`;
+  return cap+pages.map(([a,b],pi)=>{
+    const last=pi===N-1;
+    return `<div class="nl-page">${nlHead()}<div class="nl-body">`+(pi===0?nlHtHTML(M)+nlCondHTML(M):'')+nlPartsHTML(M,a,b)+(last?nlSign():'')+`</div>${nlFoot(pi+1,N)}</div>`}).join('');
+}
+function renderNL(){
+  if(!NL_OPT.date){NL_OPT.date=nlToday()}
+  $('nl-qc').value=NL_OPT.qc;$('nl-cr').value=NL_OPT.cr;$('nl-date').value=NL_OPT.date;
+  $('nl-agit').value=NL_OPT.agit;$('nl-cool').value=NL_OPT.cool;$('nl-tray').value=NL_OPT.tray;$('nl-red').checked=!!NL_OPT.red;
+  $('nlSheet').classList.toggle('black',!NL_OPT.red);
+  const recs=NL_IDS.map(id=>DB.records.find(x=>x.id===id)).filter(Boolean),box=$('nlSheet');
+  if(!recs.length){box.innerHTML='';$('nl-info').innerHTML='Chưa có dòng nào. Quay lại <b>Bảng tổng</b>, tick chọn các dòng (hoặc bôi chọn vùng) rồi bấm <b>🔥 Xuất báo cáo NL</b>.';return}
+  const models=nlGroups(recs).map(nlModel);
+  box.innerHTML=models.map(M=>`<div class="nl-grp" data-name="${nlE(M.name)}"></div>`).join('');
+  const grps=box.querySelectorAll('.nl-grp');
+  models.forEach((M,gi)=>{
+    const P=nlParams(M.mes.length),el=grps[gi];
+    for(let it=0;it<40;it++){
+      el.innerHTML=nlGroupHTML(M,P);
+      const pg=[...el.querySelectorAll('.nl-page')],N=pg.length;let bad=-1;
+      pg.forEach((p,i)=>{if(bad<0){const b=p.querySelector('.nl-body');if(b.scrollHeight>b.clientHeight+1)bad=i}});
+      if(bad<0)break;
+      if(N===1)P.only=Math.max(1,P.only-1);
+      else if(bad===0)P.more=Math.max(1,P.more-1);
+      else if(bad===N-1)P.plast=Math.max(1,P.plast-1);
+      else P.pn=Math.max(1,P.pn-1);
+    }
+  });
+  const allW=models.reduce((s,m)=>s+new Set(m.warn).size,0);
+  $('nl-info').innerHTML=`<b>${models.length}</b> báo cáo (nhóm theo bộ mã nhiệt luyện) · <b>${recs.length}</b> dòng sản phẩm${allW?` · <span style="color:#a32828">có ${allW} mục chưa đủ dữ liệu (xem cảnh báo vàng phía trên từng báo cáo)</span>`:' · dữ liệu đã đủ'}.`;
+  nlApplyYN();
+}
+function nlApplyYN(){document.querySelectorAll('#nlSheet .yn').forEach(e=>e.classList.toggle('on',NL_OPT[e.dataset.yn]===e.dataset.v))}
+function exportNLFromList(){
+  const view=getFiltered().map(x=>x.r);let rows=view.filter(r=>selected.has(r.id));
+  if(!rows.length&&SEL.a&&SEL.f){const rc=selRect();rows=VIEW.slice(rc.r1,rc.r2+1).map(x=>x&&x.r).filter(Boolean)}
+  if(!rows.length){alert('Hãy tick chọn các dòng (hoặc bôi chọn vùng ô) cần xuất báo cáo nhiệt luyện.');return}
+  NL_IDS=rows.map(r=>r.id);showPage('nl');
+}
+function nlInit(){
+  const bind=(id,k)=>{$(id).oninput=$(id).onchange=()=>{NL_OPT[k]=$(id).value;nlSave();
+    document.querySelectorAll('#nlSheet [data-nl="'+k+'"]').forEach(e=>e.textContent=NL_OPT[k]);nlApplyYN()}};
+  bind('nl-qc','qc');bind('nl-cr','cr');bind('nl-date','date');bind('nl-agit','agit');bind('nl-cool','cool');bind('nl-tray','tray');
+  $('nl-red').onchange=()=>{NL_OPT.red=$('nl-red').checked;nlSave();$('nlSheet').classList.toggle('black',!NL_OPT.red)};
+  $('btn-sel-nl').onclick=exportNLFromList;
+  $('nl-back').onclick=()=>showPage('list');
+  $('nl-print').onclick=()=>{if(!NL_IDS.length){alert('Chưa có báo cáo để in.');return}
+    const old=document.title,g=document.querySelector('#nlSheet .nl-grp');if(g)document.title=g.dataset.name;
+    window.print();setTimeout(()=>document.title=old,1500)};
+}
+
 /* ===== Xuất PDF trực tiếp (không cần hộp thoại in) ===== */
 const PDFW={"r": [250, 333, 408, 500, 500, 833, 778, 180, 333, 333, 500, 564, 250, 333, 250, 278, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 278, 278, 564, 564, 564, 444, 921, 722, 667, 667, 722, 611, 556, 722, 722, 333, 389, 722, 611, 889, 722, 722, 556, 722, 667, 556, 611, 722, 722, 944, 722, 722, 611, 333, 278, 333, 469, 500, 333, 444, 500, 444, 500, 444, 333, 500, 500, 278, 278, 500, 278, 778, 500, 500, 500, 500, 333, 389, 278, 500, 500, 722, 500, 500, 444, 480, 200, 480, 541, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 250, 333, 500, 500, 500, 500, 200, 500, 333, 760, 276, 500, 564, 333, 760, 333, 400, 564, 300, 300, 333, 500, 453, 250, 333, 300, 310, 500, 750, 750, 750, 444, 722, 722, 722, 722, 722, 722, 889, 667, 611, 611, 611, 611, 333, 333, 333, 333, 722, 722, 722, 722, 722, 722, 722, 564, 722, 722, 722, 722, 722, 722, 556, 500, 444, 444, 444, 444, 444, 444, 667, 444, 444, 444, 444, 444, 278, 278, 278, 278, 500, 500, 500, 500, 500, 500, 500, 564, 500, 500, 500, 500, 500, 500, 500, 500], "b": [250, 333, 555, 500, 500, 1000, 833, 278, 333, 333, 500, 570, 250, 333, 250, 278, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 333, 333, 570, 570, 570, 500, 930, 722, 667, 722, 722, 667, 611, 778, 778, 389, 500, 778, 667, 944, 722, 778, 611, 778, 722, 556, 667, 722, 722, 1000, 722, 722, 667, 333, 278, 333, 581, 500, 333, 500, 556, 444, 556, 444, 333, 500, 556, 278, 333, 556, 278, 833, 556, 500, 556, 556, 444, 389, 333, 556, 500, 722, 500, 500, 444, 394, 220, 394, 520, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 250, 333, 500, 500, 500, 500, 220, 500, 333, 747, 300, 500, 570, 333, 747, 333, 400, 570, 300, 300, 333, 556, 540, 250, 333, 300, 330, 500, 750, 750, 750, 500, 722, 722, 722, 722, 722, 722, 1000, 722, 667, 667, 667, 667, 389, 389, 389, 389, 722, 722, 778, 778, 778, 778, 778, 570, 778, 722, 722, 722, 722, 722, 611, 556, 500, 500, 500, 500, 500, 500, 722, 444, 444, 444, 444, 444, 278, 278, 278, 278, 500, 556, 500, 500, 500, 500, 500, 570, 500, 556, 556, 556, 556, 500, 556, 500]},PDFSYM=549;
 const pdfSafeName=s=>String(s||'').replace(/[\\\/:*?"<>|\r\n]+/g,'_').replace(/\s+/g,' ').trim();
@@ -2481,12 +2758,12 @@ function sha256(str){
   return [h0,h1,h2,h3,h4,h5,h6,h7].map(x=>x.toString(16).padStart(8,'0')).join('')}
 const AUK=LS+'_auth';
 let AU={enabled:false,users:[],log:[],rec:null},CUR=null,AU_REC_SHOW='';
-const AU_SECS=[['dash','Tổng quan','v'],['list','Bảng tổng','e'],['hard','Độ cứng sản phẩm','e'],['check','Kiểm tra đạt/không đạt (tiêu chuẩn)','e'],['tem','In tem NBT','v'],['rep','Báo cáo cơ tính','v'],['prod','Thông số nhiệt luyện','e'],['furn','Thông số lò NL (lò hóa già/ủ/tôi/ram, biểu đồ nhiệt)','e'],['data','Dữ liệu (nhập file, sao lưu, khôi phục)','e']];
+const AU_SECS=[['dash','Tổng quan','v'],['list','Bảng tổng','e'],['hard','Độ cứng sản phẩm','e'],['check','Kiểm tra đạt/không đạt (tiêu chuẩn)','e'],['tem','In tem NBT','v'],['rep','Báo cáo cơ tính','v'],['nl','Báo cáo NL (nhiệt luyện, FRM-0606)','v'],['prod','Thông số nhiệt luyện','e'],['furn','Thông số lò NL (lò hóa già/ủ/tôi/ram, biểu đồ nhiệt)','e'],['data','Dữ liệu (nhập file, sao lưu, khôi phục)','e']];
 const AU_COLG=['Thông tin chung (ngày đúc, sản phẩm, mác, số lượng, mã sản phẩm, Melt No, mã mẫu thử, NBT status, ghi chú)','Thông số nhiệt luyện (mã nhiệt luyện, thời gian giữ, tốc độ nâng nhiệt…)','Kết quả cơ tính (ngày kiểm tra, dai va đập, độ cứng)','Đơn hàng / ghi chú cuối'];
 const AU_PRESETS={
- view:{label:'Chỉ xem (xem mọi thứ, không sửa được gì)',perm:{dash:'view',list:'view',hard:'view',check:'view',tem:'view',rep:'view',prod:'view',furn:'view',data:'none'},colg:[],rowops:false},
- lab:{label:'Nhập kết quả cơ tính + độ cứng (chỉ sửa cột kết quả)',perm:{dash:'view',list:'edit',hard:'edit',check:'view',tem:'view',rep:'view',prod:'view',furn:'view',data:'none'},colg:[2],rowops:false},
- editor:{label:'Biên tập viên (sửa mọi dữ liệu, không nhập/khôi phục file)',perm:{dash:'view',list:'edit',hard:'edit',check:'edit',tem:'view',rep:'view',prod:'edit',furn:'edit',data:'view'},colg:[0,1,2,3],rowops:true}};
+ view:{label:'Chỉ xem (xem mọi thứ, không sửa được gì)',perm:{dash:'view',list:'view',hard:'view',check:'view',tem:'view',rep:'view',nl:'view',prod:'view',furn:'view',data:'none'},colg:[],rowops:false},
+ lab:{label:'Nhập kết quả cơ tính + độ cứng (chỉ sửa cột kết quả)',perm:{dash:'view',list:'edit',hard:'edit',check:'view',tem:'view',rep:'view',nl:'view',prod:'view',furn:'view',data:'none'},colg:[2],rowops:false},
+ editor:{label:'Biên tập viên (sửa mọi dữ liệu, không nhập/khôi phục file)',perm:{dash:'view',list:'edit',hard:'edit',check:'edit',tem:'view',rep:'view',nl:'view',prod:'edit',furn:'edit',data:'view'},colg:[0,1,2,3],rowops:true}};
 const colGroup=c=>c<=9?0:c<=32?1:c<=45?2:3;
 function auLoad(){
   try{const s=localStorage.getItem(AUK);if(s)AU=Object.assign({enabled:false,users:[],log:[],rec:null},JSON.parse(s))}catch(e){}
@@ -2536,11 +2813,11 @@ function auAdopt(sa){
 function auLog(a){if(!AU.enabled)return;AU.log.push({t:Date.now(),u:CUR?CUR.name:'-',a});if(AU.log.length>400)AU.log.splice(0,AU.log.length-400);auSave()}
 const auName=()=>CUR?(CUR.disp||CUR.name):'';
 function can(sec){
-  const vo=sec==='dash'||sec==='tem'||sec==='rep';
+  const vo=sec==='dash'||sec==='tem'||sec==='rep'||sec==='nl';
   if(!AU.enabled)return vo?'view':'edit';
   if(!CUR)return 'none';
   if(CUR.admin)return vo?'view':'edit';
-  const pm=CUR.perm||{},v=pm[sec]||(sec==='furn'?pm.prod:'')||'none';return vo&&v==='edit'?'view':v}
+  const pm=CUR.perm||{},v=pm[sec]||(sec==='furn'?pm.prod:sec==='nl'?pm.rep:'')||'none';return vo&&v==='edit'?'view':v}
 const canEdit=sec=>can(sec)==='edit';
 const auCanUsers=()=>!AU.enabled||!!(CUR&&CUR.admin);
 const auSee=p=>p==='users'?auCanUsers():can(p)!=='none';
@@ -3171,7 +3448,7 @@ function init(){
   $('rp-red').onchange=renderReport;
   $('rp-print').onclick=()=>exportReportFiles('pdf');
   $('rp-paper').onclick=()=>{if(!REP_IDS.length){alert('Chưa có phiếu báo cáo để in.');return}const recs=REP_IDS.map(id=>DB.records.find(x=>x.id===id)).filter(Boolean),old=document.title;document.title=repFileNames(recs,$('rp-op').value)[0].name.replace(/\.pdf$/,'');window.print();setTimeout(()=>document.title=old,1500)};
-  $('rp-back').onclick=()=>showPage('list');
+  $('rp-back').onclick=()=>showPage('list');nlInit();
   $('btn-sel-tem').onclick=()=>{const bars=[...new Set(DB.records.filter(r=>selected.has(r.id)&&r.bar).map(r=>r.bar))];if(!bars.length){alert('Hãy tick chọn các dòng cần in tem.');return}$('t-in').value=bars.join('\n');showPage('tem')};
   const cnt=()=>{$('f-count').textContent=$('f-count').textContent.replace(/đã chọn \d+/,'đã chọn '+selected.size);updateSelBar()};
   const tb=$('tbl');
