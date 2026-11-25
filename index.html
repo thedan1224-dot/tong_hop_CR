@@ -304,7 +304,7 @@ table.nlt+table.nlt{margin-top:-1px}
 .nlt.parts tr.hd td{font-size:11px}
 .nlt.parts tr.d td{height:25px}
 .nlt.parts td.idx{font-size:11px;font-weight:400}
-.nlt.parts td.hold{text-align:left;padding-left:5px;font-size:11px;line-height:1.4}
+.nlt.parts td.hold{text-align:center;padding:2px 3px;font-size:11px;line-height:1.4}
 .nlt.parts td.hbv{font-size:12.5px}
 .nlt.parts td.avg,.nlt.parts td.avg .r,.nlt.parts tr.hd.sm td:last-child{font-weight:700}
 .nlt td.inner{padding:0;border-left:1px solid #000}
@@ -1559,13 +1559,16 @@ function nlVal(g,c,unit,ceil){
 function nlHold(r,g){
   const hr=c=>{const s=String(procEff(r,c)||'').trim();if(!s)return '';return s.split('/').map(x=>{const n=fNum(x);return n==null?x.trim():n.toFixed(1)}).join(' / ')};
   const L=[],add=(lab,c,has)=>{const v=hr(c);if(v||has)L.push(lab+': '+(v||'-')+' hr')};
-  add('Age',18,!!g.ha);add('Homogenise',20,!!g.u);add('Quench',23,!!g.t);add('Temper',32,!!g.r);
+  if(g.ha)add('Age',18,true);add('Homogenise',20,!!g.u);add('Quench',23,!!g.t);add('Temper',32,!!g.r);
   return L.join('\n');
 }
 /* tên file PDF: VF1026H21-VF1030Q26-VF1031T22 - E20-H - L6510RC-473T (61-68) — số trong ngoặc là số dòng ở Bảng tổng */
 function nlRanges(a){a=[...new Set(a)].sort((x,y)=>x-y);const o=[];let i=0;while(i<a.length){let j=i;while(j+1<a.length&&a[j+1]===a[j]+1)j++;o.push(j>i?a[i]+'-'+a[j]:String(a[i]));i=j+1}return o.join(',')}
-function nlFileName(codes,grades,recs){
-  const by=new Map();recs.forEach(r=>{const p=String(r.product||'').trim();if(!p)return;if(!by.has(p))by.set(p,[]);const n=NL_NO.get(r.id);if(n)by.get(p).push(n)});
+function nlFileName(codes,grades,rows){
+  /* số trong ngoặc = số cuối của mã sản phẩm (VF1014121 -> 121): dải liền nhau gộp "121-126", cách quãng "203-204,209-210" */
+  const by=new Map();rows.forEach(x=>{const p=String(x.product||'').trim();if(!p)return;if(!by.has(p))by.set(p,[]);
+    const c=String(x.pcode||'').trim(),t=c.length>6&&/^\d+$/.test(c.slice(6))?c.slice(6):((c.match(/(\d+)$/)||[])[1]||'');
+    if(t)by.get(p).push(parseInt(t,10))});
   const prods=[...by.entries()].map(([p,ns])=>p+(ns.length?' ('+nlRanges(ns)+')':'')).join(' & ');
   return [codes.join('-')||'chua co ma NL',grades.join('+')||'',prods].filter(Boolean).join(' - ').replace(/[\\\/:*?"<>|\r\n]+/g,'_');
 }
@@ -1616,7 +1619,7 @@ function nlModel(g){
   const grades=[...new Set(g.recs.map(r=>String(r.grade||'').trim().toUpperCase()).filter(Boolean))];
   const codes=[g.ha,g.u,g.t,g.r].filter(Boolean);
   return {g,mes,ht,q,t,cond,rows,grades,warn,
-    name:nlFileName(codes,grades,g.recs)};
+    name:nlFileName(codes,grades,rows)};
 }
 /* chia dòng vào các trang A4: trang 1 chứa phần đầu biểu mẫu nên ít dòng hơn; trang cuối chừa chỗ cho phần ký tên.
    Số dòng mỗi loại trang được tự giảm cho đến khi không còn tràn trang (đo thật trên màn hình, nên đúng với mọi font / trình duyệt) */
