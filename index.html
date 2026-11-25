@@ -336,6 +336,10 @@ table.nlt+table.nlt{margin-top:-1px}
  .nlt tr.hd td,.nlt tr.gy td,.nlt td.gy{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 @page nl{size:A4 portrait;margin:8mm}
+
+/* tab Báo cáo NL: không hiện khung thông báo đồng bộ (không lọt vào bản in / PDF) */
+body.nl-on #cloud-sync-status{display:none!important;visibility:hidden!important}
+@media print{#cloud-sync-status{visibility:hidden!important}}
 </style>
 </head>
 <body>
@@ -1104,7 +1108,7 @@ function showPage(p){if(!auSee(p)){toast('Bạn không có quyền xem mục nà
   if(p==='hard'&&!$('p-hard').classList.contains('on')){HD_PAGE=1e9;HD_GO_END=true}
   if(p==='furn'&&!$('p-furn').classList.contains('on')){FPAGE=1e9;FGO_END=true}
   if(p!=='list'&&document.body.classList.contains('wide')){document.body.classList.remove('wide');const b=document.getElementById('btn-wide');if(b)b.textContent='⤢ Mở rộng bảng'}document.querySelectorAll('.page').forEach(e=>e.classList.toggle('on',e.id==='p-'+p));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
-  ({dash:renderDash,list:renderList,check:renderCheck,tem:renderTem,rep:renderReport,nl:renderNL,prod:renderProd,data:renderData,hard:renderHard,furn:renderFurn,users:renderUsers})[p]();window.scrollTo(0,0)}
+  document.body.classList.toggle('nl-on',p==='nl');({dash:renderDash,list:renderList,check:renderCheck,tem:renderTem,rep:renderReport,nl:renderNL,prod:renderProd,data:renderData,hard:renderHard,furn:renderFurn,users:renderUsers})[p]();window.scrollTo(0,0)}
 function refresh(){showPage(document.querySelector('.page.on').id.slice(2))}
 function renderDash(){
   fillSelect($('d-grade'),allGrades(),'Tất cả mác',true);yearOptions($('d-year'));
@@ -1732,12 +1736,12 @@ function nlPrintOn(){
   let st=document.getElementById('nl-page-style');
   if(!st){st=document.createElement('style');st.id='nl-page-style';document.head.appendChild(st)}
   st.textContent='@page{size:A4 portrait;margin:8mm}';
-  const c=document.getElementById('cloud-sync-status');if(c)c.style.setProperty('display','none','important');
+  const c=document.getElementById('cloud-sync-status');if(c)c.remove();
   document.title=(document.querySelector('#nlSheet .nl-grp')||{dataset:{}}).dataset.name||document.title;
 }
 function nlPrintOff(){
   const st=document.getElementById('nl-page-style');if(st)st.remove();
-  const c=document.getElementById('cloud-sync-status');if(c)c.style.removeProperty('display');
+  
 }
 window.addEventListener('beforeprint',nlPrintOn);window.addEventListener('afterprint',nlPrintOff);
 function nlInit(){
