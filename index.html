@@ -464,6 +464,7 @@ table.nlt+table.nlt{margin-top:-1px}
    <div class="toolbar">
     <button class="btn pri" id="hd-add" title="Thêm một dòng độ cứng không có trong Bảng tổng">+ Thêm dòng lẻ</button>
     <button class="btn" id="hd-r34">Hiện nhiệt luyện lần 3 - 4</button>
+    <button class="btn" id="hd-dedupe" title="Gộp các dòng độ cứng nhập tay / dán bị trùng mã sản phẩm vào dòng đã liên kết với Bảng tổng rồi xóa dòng thừa">Loại dữ liệu trùng</button>
     <button class="btn" id="hd-copyall" title="Sao chép toàn bộ các dòng đang lọc (kèm tiêu đề cột) để dán vào Excel">Sao chép cả bảng</button>
     <button class="btn" id="hd-csv">Xuất CSV (theo bộ lọc)</button>
     <span class="legend" style="margin:0 0 0 8px;align-self:center"><span><i class="sw-lk" style="background:#3a7bd5"></i>Liên kết Bảng tổng (ô nhận dạng không sửa ở đây)</span><span><i class="sw-lk" style="background:#e0a030"></i>Dòng lẻ</span><span><i class="sw-lk" style="background:#fcd9d9;border:1px solid #d64545"></i>Độ cứng không đạt</span></span>
@@ -1594,7 +1595,8 @@ function nlModel(g){
   g.recs.forEach(r=>{
     const code=htOf(r);
     hdExpand(r).forEach(it=>{
-      const h=HARD.find(x=>x.rid===r.id&&x.num===it.num);
+      const cand=HARD.filter(x=>(x.rid===r.id&&x.num===it.num)||(!x.rid&&hdN(x.melt)===hdN(r.melt)&&hdN(x.pcode)===hdN(it.code)));
+      const h=cand.find(x=>hdHasData(x)&&x.v.some(y=>y!=null))||cand[0];
       let hb=['','',''],avg='';
       if(h){
         const has=k=>[0,1,2].some(i=>hdNum(h.v[k*3+i])!=null);
@@ -2344,7 +2346,8 @@ try{HD_Y=localStorage.getItem(LS+'_hyear')}catch(e){}
 let HD_R34=(()=>{try{return localStorage.getItem(LS+'_hr34')==='1'}catch(e){return false}})();
 let HD_PS=PSsaved('_ps_hard');
 const hdNew=()=>({id:uid(),rid:'',num:'',date:'',melt:'',grade:'',product:'',pcode:'',ht:['','','',''],t:['','','',''],v:Array(12).fill(null),n:['','','',''],by:'',at:0});
-const hdKey=x=>U(x.melt)+'|'+U(x.product)+'|'+U(x.pcode);
+const hdN=s=>String(s==null?'':s).replace(/[\s\u200a-\u200f\u2028\u2029\u202f\u205f\u2060\ufeff\xa0]+/g,'').toUpperCase();
+const hdKey=x=>hdN(x.melt)+'|'+hdN(x.product)+'|'+hdN(x.pcode);
 const hdNum=x=>{if(x==null||x==='')return null;const n=typeof x==='number'?x:Number(String(x).trim().replace(',','.'));return isFinite(n)?n:null};
 const hdVal=s=>{s=String(s==null?'':s).replace(/[\u200a\u200b\xa0]/g,'').trim();if(s===''||s.startsWith('#'))return null;const n=Number(s.replace(',','.'));return isFinite(n)?n:s};
 const htOf=r=>{const j=(r.ht||[]).filter(x=>x).join('-');return j||r.htcode||''};
@@ -2384,7 +2387,7 @@ function syncHard(){
   const used=new Set();let free=null;
   const takeFree=(r,code)=>{
     if(!free){free=new Map();for(const h of HARD)if(!h.rid){const k=hdKey(h);let q=free.get(k);if(!q)free.set(k,q=[]);q.push(h)}}
-    const q=free.get(U(r.melt)+'|'+U(r.product)+'|'+U(code));return q&&q.length?q.shift():null};
+    const q=free.get(hdN(r.melt)+'|'+hdN(r.product)+'|'+hdN(code));return q&&q.length?q.shift():null};
   HARD_ORD=new Map();let ord=0;
   for(const r of DB.records){
     if(!r.melt&&!r.pcode&&!r.product)continue;
@@ -2403,7 +2406,32 @@ function syncHard(){
   }
   for(let i=HARD.length-1;i>=0;i--){const h=HARD[i];
     if(h.rid&&!used.has(h)){if(hdHasData(h))h.rid='';else HARD.splice(i,1);ch=true}}
+  if(hdDedupe()>0)ch=true;
   return ch}
+/* Loại trùng: dòng độc lập (không liên kết Bảng tổng) trùng Melt + sản phẩm + mã sản phẩm với dòng đã liên kết -> dồn dữ liệu sang dòng liên kết rồi xóa dòng thừa; trùng giữa các dòng độc lập -> giữ dòng đủ dữ liệu nhất */
+function hdDedupe(){
+  let n=0;const linked=new Map(),lone=[];
+  for(const h of HARD){if(h.rid)linked.set(hdKey(h),h);else lone.push(h)}
+  const dead=new Set();
+  const fill=(a,b)=>{let conflict=false;
+    for(let i=0;i<12;i++){if(b.v[i]==null)continue;if(a.v[i]==null)a.v[i]=b.v[i];else if(a.v[i]!==b.v[i])conflict=true}
+    for(let k=0;k<4;k++){
+      if(b.t[k]){if(!a.t[k])a.t[k]=b.t[k];else if(a.t[k]!==b.t[k])conflict=true}
+      if(b.n[k]){if(!a.n[k])a.n[k]=b.n[k];else if(a.n[k]!==b.n[k])conflict=true}
+      if(k>0&&b.ht[k]){if(!a.ht[k])a.ht[k]=b.ht[k];else if(a.ht[k]!==b.ht[k])conflict=true}}
+    if(!a.grade&&b.grade)a.grade=b.grade;
+    return !conflict};
+  const loneBy=new Map();
+  for(const h of lone){const k=hdKey(h),L=linked.get(k);
+    if(L){if(fill(L,h)){dead.add(h);n++}continue}
+    const o=loneBy.get(k);
+    if(!o){loneBy.set(k,h);continue}
+    const keep=hdHasData(o)&&!hdHasData(h)?o:(hdHasData(h)&&!hdHasData(o)?h:o),drop=keep===o?h:o;
+    if(fill(keep,drop)){dead.add(drop);loneBy.set(k,keep);n++}}
+  /* nhiều dòng liên kết cùng một mã (do dán trùng): giữ dòng có dữ liệu */
+  if(dead.size)for(let i=HARD.length-1;i>=0;i--)if(dead.has(HARD[i]))HARD.splice(i,1);
+  return n}
+
 /* gộp dữ liệu nhập vào (từ file Excel / dữ liệu mẫu): khớp theo Mã đúc + Sản phẩm + Mã sản phẩm */
 function hdMerge(inc){
   const map=new Map();for(const h of HARD){const k=hdKey(h);let q=map.get(k);if(!q)map.set(k,q=[]);q.push(h)}
@@ -2733,6 +2761,7 @@ function hdInit(){
   $('hg-prev').onclick=()=>{if(HD_PAGE>0){HD_PAGE--;renderHard()}};$('hg-next').onclick=()=>{HD_PAGE++;renderHard()};
   $('hv-detail').onclick=()=>{HD_MODE='detail';renderHard()};$('hv-month').onclick=()=>{HD_MODE='month';renderHard()};
   $('hm-year').onchange=renderHardMonthly;
+  $('hd-dedupe').onclick=()=>{hPushUndo('loại dữ liệu trùng');const n=hdDedupe();if(n){hdSave();hKeepRender();toast('Đã loại '+n+' dòng độ cứng trùng')}else{HUNDO.pop();toast('Không có dòng độ cứng nào bị trùng')}};
   $('hd-r34').onclick=()=>{HD_R34=!HD_R34;try{localStorage.setItem(LS+'_hr34',HD_R34?'1':'0')}catch(_){}renderHard()};
   $('hd-csv').onclick=()=>{const rows=hdFiltered();download('do-cung-san-pham-'+new Date().toISOString().slice(0,10)+'.csv',hdCSV(rows),'text/csv')};
   $('hd-add').onclick=()=>{
