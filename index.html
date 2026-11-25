@@ -1628,7 +1628,7 @@ function nlPaginate(n,P){
   pages.push([i,n]);return pages;
 }
 const nlE=esc;
-const nlR=(txt,bind)=>`<span class="r"${bind?' data-nl="'+bind+'"':''} contenteditable="true" spellcheck="false">${nlE(txt)}</span>`;
+const nlR=(txt,bind,sty)=>`<span class="r"${bind?' data-nl="'+bind+'"':''}${sty?' style="'+sty+'"':''} contenteditable="true" spellcheck="false">${nlE(txt)}</span>`;
 function nlYN(key,val){const o=v=>`<span class="yn${val===v?' on':''}" data-yn="${key}" data-v="${v}">${v}</span>`;return `<span class="r ynw">${o('Y')}/${o('N')}</span>`}
 /* ô cho phép gộp khi mọi dòng giống nhau (vd. giờ vào lò tôi của 2 mẻ cùng một lúc) */
 function nlMerge(rows,key,cls){
@@ -1674,7 +1674,7 @@ function nlPartsHTML(M,a,b){
       +(spP[i]?`<td rowspan="${spP[i]}">${nlR(x.product)}</td>`:'')+`<td>${nlR(x.pcode)}</td>`
       +(spM[i]?`<td rowspan="${spM[i]}">${nlR(x.melt)}</td>`:'')
       +(spH[i]?`<td rowspan="${spH[i]}" class="hold">${x.hold.split('\n').map(l=>nlR(l)).join('<br>')}</td>`:'')
-      +x.hb.map(v=>`<td class="hbv">${nlR(v)}</td>`).join('')+`<td class="hbv avg">${nlR(x.avg)}</td></tr>`});
+      +x.hb.map(v=>`<td class="hbv">${nlR(v)}</td>`).join('')+`<td class="hbv avg" style="font-weight:700">${nlR(x.avg,'','font-weight:700')}</td></tr>`});
   return s+'</tbody></table>';
 }
 const nlHead=()=>`<table class="nlt hdr"><colgroup><col style="width:17%"><col style="width:59%"><col style="width:24%"></colgroup><tbody><tr><td rowspan="2" class="lg"><img src="${REP_LOGO}" alt="logo"></td><td rowspan="2" class="tt">GET and Rigging Heat Treatment Record Sheet<br>Bảng ghi chép Xử lý nhiệt cho GET và Rigging</td><td class="did">Doc ID: <b>FRM-0606</b><br>Mã tài liệu</td></tr><tr><td class="did">Version: 1.0<br>Phiên bản</td></tr></tbody></table>`;
