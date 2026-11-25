@@ -277,7 +277,7 @@ header img.logo{height:40px;width:auto;display:block;border-radius:4px}
 .nl-cap{width:100%;max-width:733px;font-size:12px;color:var(--mut)}
 .nl-cap b{color:var(--navy)}
 .nl-warn{background:#fff6dd;border:1px solid #e8c766;color:#7a5400;border-radius:6px;padding:5px 8px;margin-top:4px}
-.nl-page{width:733px;height:1040px;background:#fff;border:1px solid #b9c3d1;box-shadow:0 2px 8px rgba(20,30,45,.1);padding:10px 22px 8px;display:flex;flex-direction:column;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;color:#000;overflow:hidden}
+.nl-page{width:733px;height:1040px;background:#fff;border:1px solid #b9c3d1;box-shadow:0 2px 8px rgba(20,30,45,.1);padding:6px 22px 4px;display:flex;flex-direction:column;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;color:#000;overflow:hidden}
 .nl-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 .nl-body>*{flex:none}
 table.nlt{width:100%;border-collapse:collapse;table-layout:fixed;margin:0;font-size:10.5px}
@@ -302,7 +302,7 @@ table.nlt+table.nlt{margin-top:-1px}
 .nlt.cond tr.d.tall td{height:26px}
 .nlt.cond tr.gy td{height:28px}
 .nlt.parts tr.hd td{font-size:11px}
-.nlt.parts tr.d td{height:25px}
+.nlt.parts tr.d td{height:24px}
 .nlt.parts td.idx{font-size:11px;font-weight:400}
 .nlt.parts td.hold{text-align:center;padding:2px 3px;font-size:11px;line-height:1.4}
 .nlt.parts td.hbv{font-size:12.5px}
@@ -315,7 +315,7 @@ table.nlt+table.nlt{margin-top:-1px}
 .nlt.sign td{font-size:10.5px;line-height:1.3;padding:3px 4px}
 .nlt.sign tr.d td{font-size:11.5px;height:38px}
 .nlt.sign td.b{font-size:11px}
-.nlt.foot{margin-top:6px}
+.nlt.foot{margin-top:4px}
 .nlt.foot td{font-size:8px;text-align:left;padding:2px 4px;height:16px;line-height:1.15}
 .nlt.foot td.pg{text-align:center;vertical-align:middle;font-size:9px}
 .nlt td .r,.nlt .r{color:#f00}
@@ -1726,6 +1726,20 @@ function exportNLFromList(){
   if(!rows.length){alert('Hãy tick chọn các dòng (hoặc bôi chọn vùng ô) cần xuất báo cáo nhiệt luyện.');return}
   NL_NO=new Map();view.forEach((r,i)=>NL_NO.set(r.id,i+1));NL_IDS=rows.map(r=>r.id);showPage('nl');
 }
+/* In ấn: ép khổ A4 dọc cho toàn bộ trang in (không phụ thuộc trình duyệt hiểu @page có tên hay không) và ẩn khung thông báo đồng bộ */
+function nlPrintOn(){
+  if(!$('p-nl').classList.contains('on'))return;
+  let st=document.getElementById('nl-page-style');
+  if(!st){st=document.createElement('style');st.id='nl-page-style';document.head.appendChild(st)}
+  st.textContent='@page{size:A4 portrait;margin:8mm}';
+  const c=document.getElementById('cloud-sync-status');if(c)c.style.setProperty('display','none','important');
+  document.title=(document.querySelector('#nlSheet .nl-grp')||{dataset:{}}).dataset.name||document.title;
+}
+function nlPrintOff(){
+  const st=document.getElementById('nl-page-style');if(st)st.remove();
+  const c=document.getElementById('cloud-sync-status');if(c)c.style.removeProperty('display');
+}
+window.addEventListener('beforeprint',nlPrintOn);window.addEventListener('afterprint',nlPrintOff);
 function nlInit(){
   const bind=(id,k)=>{$(id).oninput=$(id).onchange=()=>{NL_OPT[k]=$(id).value;nlSave();
     document.querySelectorAll('#nlSheet [data-nl="'+k+'"]').forEach(e=>e.textContent=NL_OPT[k]);nlApplyYN()}};
@@ -1736,8 +1750,7 @@ function nlInit(){
   $('nlSheet').addEventListener('input',e=>{const t=e.target;if(t.classList&&t.classList.contains('r'))t.classList.toggle('hl',/scrap/i.test(t.textContent))});
   $('nl-back').onclick=()=>showPage('list');
   $('nl-print').onclick=()=>{if(!NL_IDS.length){alert('Chưa có báo cáo để in.');return}
-    const old=document.title,g=document.querySelector('#nlSheet .nl-grp');if(g)document.title=g.dataset.name;
-    window.print();setTimeout(()=>document.title=old,1500)};
+    const old=document.title;window.print();setTimeout(()=>document.title=old,1500)};
 }
 
 /* ===== Xuất PDF trực tiếp (không cần hộp thoại in) ===== */
