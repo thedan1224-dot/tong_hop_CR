@@ -1515,7 +1515,7 @@ function exportReportFromList(){
   REP_IDS=ids;showPage('rep');
 }
 /* ===== Báo cáo nhiệt luyện (biểu mẫu FRM-0606 — GET and Rigging Heat Treatment Record Sheet) ===== */
-let NL_IDS=[];
+let NL_IDS=[],NL_NO=new Map();
 const NL_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const NL_TEMPER={'E20-HT':'605','E20-H':'200','E20-A':'200','E28C-H':'200','E28C-A':'200'};
 const NL_RANGE={'E20-HT':'286-321','E20-H':'387-460','E20-A':'387-460','E28C-H':'460-540','E28C-A':'460-540'};
@@ -1559,6 +1559,13 @@ function nlHold(r,g){
   const L=[],add=(lab,c,has)=>{const v=hr(c);if(v||has)L.push(lab+': '+(v||'-')+' hr')};
   add('Age',18,!!g.ha);add('Homogenise',20,!!g.u);add('Quench',23,!!g.t);add('Temper',32,!!g.r);
   return L.join('\n');
+}
+/* tên file PDF: VF1026H21-VF1030Q26-VF1031T22 - E20-H - L6510RC-473T (61-68) — số trong ngoặc là số dòng ở Bảng tổng */
+function nlRanges(a){a=[...new Set(a)].sort((x,y)=>x-y);const o=[];let i=0;while(i<a.length){let j=i;while(j+1<a.length&&a[j+1]===a[j]+1)j++;o.push(j>i?a[i]+'-'+a[j]:String(a[i]));i=j+1}return o.join(', ')}
+function nlFileName(codes,grades,recs){
+  const by=new Map();recs.forEach(r=>{const p=String(r.product||'').trim();if(!p)return;if(!by.has(p))by.set(p,[]);const n=NL_NO.get(r.id);if(n)by.get(p).push(n)});
+  const prods=[...by.entries()].map(([p,ns])=>p+(ns.length?' ('+nlRanges(ns)+')':'')).join(', ');
+  return [codes.join('-')||'chua co ma NL',grades.join('+')||'',prods].filter(Boolean).join(' - ').replace(/[\\\/:*?"<>|\r\n]+/g,'_');
 }
 /* dựng mô hình dữ liệu của một báo cáo */
 function nlModel(g){
@@ -1604,7 +1611,7 @@ function nlModel(g){
   const grades=[...new Set(g.recs.map(r=>String(r.grade||'').trim().toUpperCase()).filter(Boolean))];
   const codes=[g.ha,g.u,g.t,g.r].filter(Boolean);
   return {g,mes,ht,q,t,cond,rows,grades,warn,
-    name:'FRM-0606 - '+(codes.join('-')||'chua co ma NL')+' - '+(grades.join('+')||'?')+' - '+[...new Set(rows.map(x=>x.product).filter(Boolean))].join(', ')};
+    name:nlFileName(codes,grades,g.recs)};
 }
 /* chia dòng vào các trang A4: trang 1 chứa phần đầu biểu mẫu nên ít dòng hơn; trang cuối chừa chỗ cho phần ký tên.
    Số dòng mỗi loại trang được tự giảm cho đến khi không còn tràn trang (đo thật trên màn hình, nên đúng với mọi font / trình duyệt) */
@@ -1708,7 +1715,7 @@ function exportNLFromList(){
   const view=getFiltered().map(x=>x.r);let rows=view.filter(r=>selected.has(r.id));
   if(!rows.length&&SEL.a&&SEL.f){const rc=selRect();rows=VIEW.slice(rc.r1,rc.r2+1).map(x=>x&&x.r).filter(Boolean)}
   if(!rows.length){alert('Hãy tick chọn các dòng (hoặc bôi chọn vùng ô) cần xuất báo cáo nhiệt luyện.');return}
-  NL_IDS=rows.map(r=>r.id);showPage('nl');
+  NL_NO=new Map();view.forEach((r,i)=>NL_NO.set(r.id,i+1));NL_IDS=rows.map(r=>r.id);showPage('nl');
 }
 function nlInit(){
   const bind=(id,k)=>{$(id).oninput=$(id).onchange=()=>{NL_OPT[k]=$(id).value;nlSave();
