@@ -1540,11 +1540,14 @@ const nlFmtN=n=>n==null||n===''||!isFinite(n)?'':(Number.isInteger(+n)?String(+n
 /* nhóm các dòng đã chọn theo bộ mã nhiệt luyện (Hóa già – Ủ – Tôi (bỏ hậu tố mẻ) – Ram): mỗi nhóm = 1 báo cáo */
 function nlGroups(recs){
   const map=new Map();
-  recs.forEach(r=>{const ht=r.ht||[],tc=fClean(ht[2]),tb=tc?lotSplit(tc).base:'';
-    const key=[fClean(ht[0]),fClean(ht[1]),tb,fClean(ht[3])].map(U).join('|');
-    let g=map.get(key);if(!g){g={key,ha:fClean(ht[0]),u:fClean(ht[1]),t:tb,r:fClean(ht[3]),recs:[]};map.set(key,g)}
+  recs.forEach(r=>{const ht=r.ht||[],tc=fClean(ht[2]),tb=tc?lotSplit(tc).base:'',ha=fClean(ht[0]),u=fClean(ht[1]),rc=fClean(ht[3]);
+    /* một báo cáo = một đợt Tôi + Ram (kể cả 2 mẻ -1/-2); Hóa già / Ủ có thể gồm nhiều mã (nhiều lò) -> mỗi mã một dòng */
+    const key=(tb||rc)?[tb,rc].map(U).join('|'):[ha,u].map(U).join('|');
+    let g=map.get(key);if(!g){g={key,has:[],us:[],t:tb,r:rc,recs:[]};map.set(key,g)}
+    if(ha&&!g.has.some(x=>U(x)===U(ha)))g.has.push(ha);
+    if(u&&!g.us.some(x=>U(x)===U(u)))g.us.push(u);
     g.recs.push(r)});
-  return [...map.values()];
+  const g=[...map.values()];g.forEach(x=>{x.has.sort();x.us.sort()});return g;
 }
 /* danh sách mẻ của nhóm: Tôi có hậu tố -1/-2 thì đúng mẻ đó; không có hậu tố mà biểu đồ nhiệt ghi nhiều mẻ thì liệt kê đủ */
 function nlMes(g){
@@ -1563,7 +1566,7 @@ function nlVal(g,c,unit,ceil){
 function nlHold(r,g){
   const hr=c=>{const s=String(procEff(r,c)||'').trim();if(!s)return '';return s.split('/').map(x=>{const n=fNum(x);return n==null?x.trim():n.toFixed(1)}).join(' / ')};
   const L=[],add=(lab,c,has)=>{const v=hr(c);if(v||has)L.push(lab+': '+(v||'-')+' hr')};
-  if(g.ha)add('Age',18,true);add('Homogenise',20,!!g.u);add('Quench',23,!!g.t);add('Temper',32,!!g.r);
+  if(g.has.length)add('Age',18,true);add('Homogenise',20,!!g.us.length);add('Quench',23,!!g.t);add('Temper',32,!!g.r);
   return L.join('\n');
 }
 /* tên file PDF: VF1026H21-VF1030Q26-VF1031T22 - E20-H - L6510RC-473T (61-68) — số trong ngoặc là số dòng ở Bảng tổng */
@@ -1579,12 +1582,14 @@ function nlFileName(codes,grades,rows){
 /* dựng mô hình dữ liệu của một báo cáo */
 function nlModel(g){
   const mes=nlMes(g),warn=[],fdt=(type,code,me)=>code?(FD[type+'|'+U(code)+(me?'|'+me:'')]||null):null;
-  const ha=fdt('ha',g.ha),u=fdt('u',g.u);
   const ht=[];
-  ht.push({en:'Age',vi:'Hóa già',code:g.ha||'-',stove:nlStove(g.ha)||'-',in:ha?nlDT(ha.bd):'-',out:ha?nlDT(ha.kt):'-'});
-  ht.push({en:'Homogenise',vi:'Ủ',code:g.u||'-',stove:nlStove(g.u)||'-',in:u?nlDT(u.bd):'',out:u?nlDT(u.kt):''});
-  if(g.u&&(!u||!u.bd||!u.kt))warn.push('giờ vào/ra lò ủ '+g.u);
-  if(g.ha&&(!ha||!ha.bd||!ha.kt))warn.push('giờ vào/ra lò hóa già '+g.ha);
+  const stage=(en,vi,type,codes)=>{
+    if(!codes.length){ht.push({en,vi,code:'-',stove:'-',in:'-',out:'-',lab:en,rs:1});return}
+    codes.forEach(c=>{const e=fdt(type,c);
+      ht.push({en,vi,code:c,stove:nlStove(c)||'-',in:e?nlDT(e.bd):'',out:e?nlDT(e.kt):''});
+      if(!e||!e.bd||!e.kt)warn.push('giờ vào/ra lò '+(type==='ha'?'hóa già ':'ủ ')+c)})};
+  stage('Age','Hóa già','ha',g.has);
+  stage('Homogenise','Ủ','u',g.us);
   const q=[],t=[];
   mes.forEach(m=>{
     const qe=fdt('t',g.t,m),re=g.r?fdt('r',g.r,g.t?m:1):null;
@@ -1621,7 +1626,7 @@ function nlModel(g){
   if(rows.some(x=>x.hb[0]===''&&x.hb[1]===''&&x.hb[2]===''))warn.push('độ cứng (tab Độ cứng sản phẩm) của '+rows.filter(x=>x.hb[0]===''&&x.hb[1]===''&&x.hb[2]==='').length+' dòng');
   if(rows.some(x=>!x.pcode))warn.push('mã sản phẩm (Casting Number)');
   const grades=[...new Set(g.recs.map(r=>String(r.grade||'').trim().toUpperCase()).filter(Boolean))];
-  const codes=[g.ha,g.u,g.t,g.r].filter(Boolean);
+  const codes=[...g.has,...g.us,g.t,g.r].filter(Boolean);
   return {g,mes,ht,q,t,cond,rows,grades,warn,
     name:nlFileName(codes,grades,rows)};
 }
@@ -1643,13 +1648,15 @@ function nlMerge(rows,key,cls){
   return rows.map((x,i)=>same?(i?'':`<td rowspan="${rows.length}" class="${cls}">${nlR(x[key])}</td>`):`<td class="${cls}">${nlR(x[key])}</td>`);
 }
 function nlHtHTML(M){
-  const lab=(en,vi)=>`<td class="lab2 r"><span class="r" contenteditable="true" spellcheck="false">${nlE(en)}</span><br><span class="r" contenteditable="true" spellcheck="false">${nlE(vi)}</span></td>`;
   let s=`<table class="nlt top"><colgroup><col style="width:21%"><col style="width:17%"><col style="width:8%"><col style="width:27%"><col style="width:27%"></colgroup><tbody>
 <tr class="hd"><td>HEAT TREATMENT<br>Xử lý nhiệt</td><td>HEAT TREATMENT OR LOAD NUMBER<br>Mã số xử lý nhiệt</td><td>STOVE NUMBER<br>Mã số lò</td><td>DATE/TIME IN<br>Ngày/giờ vào</td><td>DATE/TIME OUT<br>Ngày/giờ ra</td></tr>`;
-  M.ht.forEach(h=>{s+=`<tr class="d">${lab(h.en,h.vi)}<td>${nlR(h.code)}</td><td>${nlR(h.stove)}</td><td>${nlR(h.in)}</td><td>${nlR(h.out)}</td></tr>`});
-  const grp=(en,vi,rows)=>{const iIn=nlMerge(rows,'in','tdc'),iOut=nlMerge(rows,'out','tdc');
-    rows.forEach((x,i)=>{s+=`<tr class="d">`+(i?'':`<td rowspan="${rows.length}" class="lab2">${nlR(en)}<br>${nlR(vi)}</td><td rowspan="${rows.length}">${nlR(x.code)}</td><td rowspan="${rows.length}">${nlR(x.stove)}</td>`)+iIn[i]+iOut[i]+'</tr>'})};
-  grp('Quench','Tôi',M.q);grp('Temper','Ram',M.t);
+  /* mỗi công đoạn có thể nhiều dòng (nhiều mã lò Ủ / nhiều mẻ Tôi, Ram); ô giống nhau ở mọi dòng thì gộp lại */
+  const blk=(en,vi,rows)=>{
+    const cc=nlMerge(rows,'code','tdc'),ss=nlMerge(rows,'stove','tdc'),ii=nlMerge(rows,'in','tdc'),oo=nlMerge(rows,'out','tdc');
+    rows.forEach((x,i)=>{s+='<tr class="d">'+(i?'':`<td rowspan="${rows.length}" class="lab2">${nlR(en)}<br>${nlR(vi)}</td>`)+cc[i]+ss[i]+ii[i]+oo[i]+'</tr>'})};
+  blk('Age','Hóa già',M.ht.filter(x=>x.en==='Age'));
+  blk('Homogenise','Ủ',M.ht.filter(x=>x.en==='Homogenise'));
+  blk('Quench','Tôi',M.q);blk('Temper','Ram',M.t);
   return s+'</tbody></table>';
 }
 function nlCondHTML(M){
