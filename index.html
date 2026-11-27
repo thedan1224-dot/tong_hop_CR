@@ -340,6 +340,21 @@ table.nlt+table.nlt{margin-top:-1px}
 /* tab Báo cáo NL: không hiện khung thông báo đồng bộ (không lọt vào bản in / PDF) */
 body.nl-on #cloud-sync-status{display:none!important;visibility:hidden!important}
 @media print{#cloud-sync-status{visibility:hidden!important}}
+/* thành phần hóa */
+#hcolPanel{position:fixed;display:none;z-index:85;width:560px;max-width:calc(100vw - 16px);max-height:70vh;overflow:auto;background:#fff;border:1px solid #b9c3d1;border-radius:10px;box-shadow:0 8px 28px #0003;padding:12px 14px}
+#chTbl{border-collapse:collapse;table-layout:fixed;font-size:12.5px}
+#chTbl th,#chTbl td{border:1px solid #c9d2df;padding:2px 3px;text-align:center;vertical-align:middle;background:#fff}
+#chTbl thead th{position:sticky;background:#e8eef7;color:#1f3a5f;z-index:2;font-size:12px;top:0;height:30px}
+#chTbl thead tr:nth-child(2) th{top:30px}
+#chTbl td.l{text-align:left}
+#chTbl td.pc,#chTbl td.pc input{font-weight:700}
+#chTbl input.chi{border:1px solid transparent;background:transparent;text-align:center;padding:3px 2px;font-size:12.5px;box-sizing:border-box;border-radius:3px}
+#chTbl input.chi:hover{border-color:#b9c3d1}#chTbl input.chi:focus{border-color:#3a7bd5;background:#fff;outline:none}
+#chTbl input.chi.bad{background:#fbe0e0;color:#a32828;font-weight:600}
+#chStd{border-collapse:collapse;font-size:12.5px}#chStd th,#chStd td{border:1px solid #c9d2df;padding:2px 3px;text-align:center}#chStd th{background:#e8eef7;color:#1f3a5f}
+#chStd input{border:1px solid transparent;background:transparent;padding:3px 2px;font-size:12.5px;box-sizing:border-box}#chStd input:focus{border-color:#3a7bd5;background:#fff;outline:none}
+#hardTbl td[data-c="4"],#hardTbl td[data-c="4"] input{font-weight:700}
+#tbl td[data-c="4"],#tbl td[data-c="4"] input.cell{font-weight:700}
 </style>
 </head>
 <body>
@@ -349,6 +364,7 @@ body.nl-on #cloud-sync-status{display:none!important;visibility:hidden!important
   <button data-p="dash" class="on">Tổng quan</button>
   <button data-p="list">Bảng tổng</button>
   <button data-p="hard">Độ cứng sản phẩm</button>
+  <button data-p="chem">Thành phần hóa</button>
   <button data-p="check">Kiểm tra đạt/không đạt</button>
   <button data-p="tem">In tem NBT</button>
   <button data-p="rep">Báo cáo cơ tính</button>
@@ -469,6 +485,7 @@ body.nl-on #cloud-sync-status{display:none!important;visibility:hidden!important
    <div class="toolbar">
     <button class="btn pri" id="hd-add" title="Thêm một dòng độ cứng không có trong Bảng tổng">+ Thêm dòng lẻ</button>
     <button class="btn" id="hd-r34">Hiện nhiệt luyện lần 3 - 4</button>
+    <button class="btn" id="hd-cols" title="Chọn cột muốn ẩn / hiện trong bảng">👁 Ẩn/hiện cột</button>
     <button class="btn" id="hd-dedupe" title="Gộp các dòng độ cứng nhập tay / dán bị trùng mã sản phẩm vào dòng đã liên kết với Bảng tổng rồi xóa dòng thừa">Loại dữ liệu trùng</button>
     <button class="btn" id="hd-copyall" title="Sao chép toàn bộ các dòng đang lọc (kèm tiêu đề cột) để dán vào Excel">Sao chép cả bảng</button>
     <button class="btn" id="hd-csv">Xuất CSV (theo bộ lọc)</button>
@@ -492,8 +509,32 @@ body.nl-on #cloud-sync-status{display:none!important;visibility:hidden!important
  <div class="card" id="usersBody"></div>
  <div class="card" id="usersLog" style="display:none"></div>
 </section>
+<section id="p-chem" class="page">
+ <div class="card">
+  <h3>Thành phần hóa học (Chemical Composition)</h3>
+  <div class="row">
+   <label>Năm đúc<select id="ch-year"></select></label>
+   <label>Mác<select id="ch-grade"></select></label>
+   <label>Trạng thái<select id="ch-st"><option value="">Tất cả</option><option value="todo">Chưa nhập thành phần</option><option value="done">Đã nhập thành phần</option></select></label>
+   <label style="flex:1;min-width:220px">Tìm kiếm (sản phẩm, mã sản phẩm, mã mẻ đúc, mã mẫu thử)<input id="ch-q" placeholder="VD: VF11093"></label>
+   <button class="btn" id="ch-reset">Xóa lọc</button>
+  </div>
+  <div class="hint">Các cột <b>Ngày đúc, Sản phẩm, Mác, Số lượng, Mã sản phẩm, Mã mẻ đúc, Mã mẫu thử</b> được lấy tự động từ <b>Bảng tổng</b>. Các sản phẩm dùng chung một mẻ + mã mẫu thử thì gộp chung một ô thành phần. Chọn <b>Ngày kiểm tra</b> bằng ô lịch, nhập % từng nguyên tố (hoặc bôi vùng từ Excel rồi <b>Ctrl+V</b> vào ô C, dán được nhiều dòng × nhiều cột). Ô <span style="background:#fbe0e0;color:#a32828;padding:0 4px;border-radius:3px">đỏ</span> = nằm ngoài tiêu chuẩn của mác ở bảng bên dưới.</div>
+ </div>
+ <div class="card">
+  <h3 style="margin-top:0">Tiêu chuẩn thành phần theo mác</h3>
+  <div class="tablewrap" style="max-height:none"><table id="chStd"></table></div>
+  <div class="toolbar"><button class="btn pri" id="ch-std-add">+ Thêm mác</button><button class="btn" id="ch-std-reset">Khôi phục E20 / E28C theo file mẫu</button></div>
+  <div class="hint">Nhập dạng <b>0.19-0.23</b>, <b>≤0.025</b> hoặc <b>≥0.2</b>; để trống hoặc "-" thì không kiểm nguyên tố đó. Mác ở bảng dưới khớp theo đầu mác (E20 áp dụng cho E20-H, E20-HT, E20-A...).</div>
+ </div>
+ <div class="card">
+  <div class="toolbar"><button class="btn" id="ch-csv">Xuất CSV (theo bộ lọc)</button><span class="muted" id="ch-count" style="margin-left:auto;align-self:center"></span></div>
+  <div class="gridwrap" id="chWrap"><table id="chTbl"></table></div>
+  <div class="pager"><span id="ch-info"></span><label style="flex-direction:row;align-items:center;gap:6px;color:var(--mut);font-size:12px">Số mẫu / trang <select id="ch-ps"><option value="50">50</option><option value="100">100</option><option value="200">200</option></select></label><span><button class="btn" id="ch-prev">‹ Trước</button> <button class="btn" id="ch-next">Sau ›</button></span></div>
+ </div>
+</section>
 <section id="p-check" class="page">
- <div class="card"><div class="row"><label>Năm đúc (áp dụng cho số liệu đạt/không đạt và danh sách dòng không đạt)<select id="c-year"></select></label></div></div>
+ <div class="card"><div class="row"><label>Năm đúc (áp dụng cho số liệu đạt/không đạt và danh sách dòng không đạt)<select id="c-year"></select></label><label>Lọc theo<select id="c-dsrc"><option value="t">Ngày kiểm tra</option><option value="d">Ngày đúc</option></select></label><label>Từ ngày<input type="date" id="c-from"></label><label>Đến ngày<input type="date" id="c-to"></label><button class="btn" id="c-dreset">Xóa lọc ngày</button></div><div class="hint" id="c-dinfo" style="margin-top:6px"></div></div>
  <div class="kpis" id="ckpis"></div>
  <div id="stdWarn"></div>
  <div class="card">
@@ -720,6 +761,7 @@ body.nl-on #cloud-sync-status{display:none!important;visibility:hidden!important
 </div></div>
 <div id="cfPop"></div>
 <div class="colpanel" id="colPanel"></div>
+<div id="hcolPanel" class="colpanel"></div>
 <div class="notebub" id="noteBub"></div>
 <div class="notepop" id="notePop"><h4 id="np-title">Ghi chú</h4><textarea id="np-text" placeholder="Nhập ghi chú cho mã sản phẩm này…"></textarea>
  <div class="toolbar"><button class="btn dng" id="np-del" style="padding:5px 10px">Xóa ghi chú</button><span><button class="btn" id="np-cancel" style="padding:5px 10px">Đóng</button> <button class="btn pri" id="np-save" style="padding:5px 12px">Lưu</button></span></div>
@@ -780,7 +822,7 @@ function migrateStds(d){
   return cloneStds();
 }
 const PRODUCTS_SEED="L2135|E20-HT|-|9|9|9;L2193|E20-HT|-|6|6|6;L6515|E20-HT|-|6|6|6;L6565|E20-HT|-|10|10|10;L6670|E20-HT|-|6|6|6;AB-I-C567L-E20H|E20-H|-|5|5|12;AB-I-C567R-E20H|E20-H|-|5|5|12;AB-I-C672L-E20H|E20-H|-|4|4|12;AB-I-C672R-E20H|E20-H|-|4|4|12;AB-I-C857L-E20H|E20-H|-|4|4|12;AB-I-C857R-E20H|E20-H|-|4|4|12;AB-C-CSS-E20H|E20-H|-|4|4|12;AB-C-CFS-E20H|E20-H|-|5|5|12;AB-CNR-CL-E20H|E20-H|-|6|6|15;AB-CNR-CR-E20H|E20-H|-|6|6|15;AE181LE LH|E20-H|-|5|5|12;AE181LE RH|E20-H|-|5|5|12;AE182LE LH|E20-H|-|5|5|12;AE182LE RH|E20-H|-|5|5|12;AE183LE LH|E20-H|-|5|5|12;AE183LE RH|E20-H|-|5|5|12;CS03-0029|E20-H|-|5|5|12;ES6697-2PX|E20-H|-|2|2|6;ES6697-5APX|E20-H|-|4|4|12;ES6697-5HDPX|E20-H|-|4|4|12;ES6697-7PX|E20-H|-|6|6|12;L6170C490T|E20-H|-|9|9|15;L6171LC-490T|E20-H|-|9|9|15;L6172LC-490T|E20-H|-|9|9|15;L6172RC490T|E20-H|-|9|9|15;L6459W120-820T|E20-H|-|6|6|12;L6509C-473T|E20-H|-|8|8|15;L6510RC-473T|E20-H|-|8|8|15;L6511LC-473T|E20-H|-|8|8|15;L6519|E20-H|-|6|6|15;L6537C-699T|E20-H|-|8|8|15;L6538RC-699T|E20-H|-|8|8|15;L6538LC-699T|E20-H|-|8|8|15;L6539LC-699T|E20-H|-|8|8|15;L6555|E20-H|-|6|6|15;L6556W90-840T|E20-H|-|5|5|12;L6558W70-840T|E20-H|-|5|5|12;L6588|E20-H|-|4|4|12;L6589|E20-H|-|4|4|12;L6590|E20-H|-|8|8|15;L6659W70-380T|E20-H|-|5|5|12;L6662W120-515T|E20-H|-|6|6|12;L6890W140-820T|E20-H|-|5|5|12;L6922|E20-H|-|4|4|12;L6965|E20-H|-|7|7|12;L6966|E20-H|-|7|7|12;L6967|E20-H|-|5|5|12;L6968|E20-H|-|5|5|12;L6972RC-381T|E20-H|-|6|6|15;L6973LC-381T|E20-H|-|6|6|15;L6974C-381T|E20-H|-|6|6|15;L6975|E20-H|-|8|8|12;L6976|E20-H|-|8|8|12;L6977|E20-H|-|6|6|12;L6978|E20-H|-|6|6|12;LSRE1522C|E20-H|-|6|6|12;LSRE1522L|E20-H|-|6|6|12;LSRE1522R|E20-H|-|6|6|12;LSSL7043C|E20-H|-|7|7|15;LSSL7043L|E20-H|-|7|7|15;LSSL7043R|E20-H|-|7|7|15;LSSR7043C|E20-H|-|7|7|15;LSSR7043L|E20-H|-|7|7|15;LSSR7043R|E20-H|-|7|7|15;TDH5030-500|E20-H|-|6|6|12;TDH7030-750|E20-H|-|6|6|12;TRS5530-DP|E20-H|-|6|6|12;TRS5530-RA|E20-H|-|8|8|15;TRS5531-500|E20-H|-|6|6|12;TRS6030-500|E20-H|-|6|6|12;TRS6030-750|E20-H|-|6|6|12;TRS6036-750|E20-H|-|7|7|15;TRS7030-750|E20-H|-|7|7|12;TRS7030-SP|E20-H|-|9|9|15;AE18010-325 LH|E28C-H|-|4|4|12;AE18010-325 RH|E28C-H|-|4|4|12;AE18010-430 LH|E28C-H|-|4|4|12;AE18010-430 RH|E28C-H|-|4|4|12;AE180EB2-WN LH|E28C-H|-|6|6|12;AE180EB2-WN RH|E28C-H|-|6|6|12;AE180EBF-55 LH|E28C-H|-|5|5|12;AE180EBF-55 RH|E28C-H|-|5|5|12;AE180EBF LH|E28C-H|-|5|5|12;AE180EBF RH|E28C-H|-|5|5|12;AE180EB-WN LH|E28C-H|-|5|5|12;AE180EB-WN RH|E28C-H|-|5|5|12;AE180RWS LH|E28C-H|-|3|3|12;AE180RWS RH|E28C-H|-|3|3|12;AE180WN2-EB LH|E28C-H|-|5|5|12;AE180WN2-EB RH|E28C-H|-|5|5|12;AE180WN-325 LH|E28C-H|-|4|4|12;AE180WN-325 RH|E28C-H|-|4|4|12;AE180WN-325 S|E28C-H|-|4|4|12;AE180WN-415 S|E28C-H|-|4|4|12;AE180WN-430 LH|E28C-H|-|4|4|12;AE180WN-430 RH|E28C-H|-|4|4|12;AE180WN2-EB2 LH|E28C-H|-|4|4|12;AE180WN2-EB2 RH|E28C-H|-|4|4|12;CS03-0003|E28C-H|-|6|6|12;CS03-0007|E28C-H|-|6|6|12;CS03-0008|E28C-H|-|7|7|12;CS03-0013|E28C-H|-|6|6|12;CS03-0014|E28C-H|-|7|7|12;CS03-0017|E28C-H|-|8|8|15;CS03-0033|E28C-H|-|6|6|12;CS03-0021|E28C-H|-|9|9|15;CS03-0025|E28C-H|-|8|8|15;CS03-0028|E28C-H|-|11|11|15;CS03-0031|E28C-H|-|8|8|15;CS03-0034|E28C-H|-|5|5|12;CS03-0041|E28C-H|-|6|6|12;CS04-0004|E28C-H|-|6|6|12;CS04-0005|E28C-H|-|6|6|12;CS04-0006|E28C-H|-|6|6|12;CS04-0017|E28C-H|-|7|7|15;CS04-0018|E28C-H|-|7|7|15;CS04-0019|E28C-H|-|7|7|15;CS04-0020|E28C-H|-|6|6|12;CS04-0021|E28C-H|-|6|6|12;CS04-0022|E28C-H|-|6|6|12;CS04-0067|E28C-H|-|6|6|12;CS04-0076|E28C-H|-|6|6|12;CS04-0077|E28C-H|-|6|6|12;CS04-0078|E28C-H|-|6|6|12;L6566C-320T|E28C-H|-|6|6|12;L6567RC-320T|E28C-H|-|6|6|15;L6568LC-320T|E28C-H|-|6|6|15;L6628RC-330T|E28C-H|-|7|7|15;L6629LC-330T|E28C-H|-|7|7|15;L6630C-330T|E28C-H|-|7|7|15;L6708RC-563T|E28C-H|-|9|9|15;L6709LC-563T|E28C-H|-|9|9|15;L6700C-500T|E28C-H|-|7|7|15;L6701RC-500T|E28C-H|-|7|7|15;L6702LC-500T|E28C-H|-|7|7|15;L6969C-410T|E28C-H|-|7|7|15;L6970RC-410T|E28C-H|-|7|7|15;L6971LC-410T|E28C-H|-|7|7|15;LSDS3548C|E28C-H|-|7|7|15;LSDW3554C|E28C-H|-|7|7|15;LSF2510C|E28C-H|-|7|7|15;LSF2510L|E28C-H|-|7|7|15;LSF2510R|E28C-H|-|7|7|15;TLSSR6041C|E28C-H|-|7|7|15;TLSSR6041R|E28C-H|-|7|7|15;TLSSR6041L|E28C-H|-|7|7|15;SNRG50-235L|E28C-H|-|5|5|12;SNRG50-235R|E28C-H|-|5|5|12;SNRG50-235HL|E28C-H|-|5|5|12;SNRG50-235HR|E28C-H|-|5|5|12;SNRG50-288T|E28C-H|-|5|5|12;SNRG50-290S|E28C-H|-|5|5|12;SNRG50-330S|E28C-H|-|5|5|12;SNRG50-420S|E28C-H|-|5|5|12;T9005-750CPX|E28C-H|-|4|4|12;T9006-750CPX|E28C-H|-|4|4|12;T9010-500CPX|E28C-H|-|4|4|12;T9017-750CPX|E28C-H|-|4|4|12;T9041-500CPX|E28C-H|-|4|4|12;TRS2530-HR|E28C-H|-|6|6|12;TRS2530-SP|E28C-H|-|6|6|12;TRS2530-RA|E28C-H|-|6|6|12;TRS2530-DP|E28C-H|-|5|5|12;TRS3530-DP|E28C-H|-|5|5|12;TRS3530-RA|E28C-H|-|7|7|15;TRS4530-RA|E28C-H|-|6|6|12;TRS4530-SP|E28C-H|-|6|6|12;TRS5530-RA|E28C-H|-|8|8|15;TRS6030-LRP|E28C-H|-|8|8|15;TRS7030-750|E28C-H|-|7|7|12;TRS7031-RA|E28C-H|-|11|11|15;CS04-0038|E28C-A|75|8|8|15;CS04-0039|E28C-A|75|8|8|15;CS04-0040|E28C-A|75|8|8|15;L6674C-562T|E28C-A|75|7|7|15;L6675RC-562T|E28C-A|75|7|7|15;L6676LC-562T|E28C-A|75|7|7|15;TDH7030-SP|E28C-A|75|9|9|15;TRS6030-SP|E28C-A|75|10|10|15;CS03-0018|E28C-A|75|10|10|15;CS04-0123|E28C-H|-|7|7|15;CS04-0124|E28C-H|-|7|7|15;CS04-0125|E28C-H|-|7|7|15;CS05-0037|E20-H|-|4|4|12;CS05-0038|E20-H|-|4|4|12;CS05-0040|E20-H|-|6|6|12;CS05-0041|E20-H|-|6|6|12;CS03-0006|E28C-H|-|6|6|12;CS05-0004|E20-H|-|5|5|12;CS05-0005|E20-H|-|5|5|12;CS05-0006|E20-H|-|5|5|12;CS05-0007|E20-H|-|5|5|12;L2140|E20-H|-|7|7|12;L6500RC-503T|E20-H|-|6|6|12;L6499LC-503T|E20-H|-|6|6|12;CS04-0023|E28C-H|-|7|7|12;CS04-0024|E28C-H|-|7|7|12;TRS7035-750|E20-H|-|6|6|12;CS05-0003|E20-H|-|6|6|12;CS05-0008|E20-H|-|5|5|12;CS05-0009|E20-H|-|6|6|12;CS04-0025|E28C-H|-|7|7|12;6685|E20-A|75|8|8|15;D-06620-R1|E28C-H|-|5|5|12;D-03735-A|E28C-H|-|6|6|12;CS03-0045|E28C-H|-|6|6|12;CS03-0046|E28C-H|-|6|6|12;6668|E20-A|75|8|8|15;CS03-0036|E28C-H|-|6|6|12;CS03-0040|E28C-H|-|7|7|12;CS04-0071|E28C-H|-|5|5|12;CS04-0144|E28C-H|-|5|5|12";
-let DB={records:[],products:[],stds:cloneStds()};
+let DB={records:[],products:[],stds:cloneStds(),chem:{},chemStd:null};
 const $=id=>document.getElementById(id);
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
@@ -933,7 +975,7 @@ function mergeImportedProducts(p){const key=x=>U(x.product)+'|'+U(x.grade);const
 function seedProducts(){return PRODUCTS_SEED.split(';').map(s=>{const p=s.split('|');const n=i=>p[i]==='-'?null:Number(p[i]);return {product:p[0],grade:p[1],ht:[n(2),n(3),n(4),n(5)]}})}
 function save(){try{localStorage.setItem(LS,JSON.stringify(DB))}catch(e){alert('Không lưu được dữ liệu: '+e.message)}try{if(syncHard())hdSave()}catch(e){console.error(e)}try{cloudMarkDirty()}catch(e){}}
 function load(){
-  try{const s=localStorage.getItem(LS);if(s){const d=JSON.parse(s);DB.records=d.records||[];DB.products=d.products||[];DB.stds=migrateStds(d)}}catch(e){}
+  try{const s=localStorage.getItem(LS);if(s){const d=JSON.parse(s);DB.records=d.records||[];DB.products=d.products||[];DB.stds=migrateStds(d);DB.chem=d.chem&&typeof d.chem==='object'?d.chem:{};DB.chemStd=Array.isArray(d.chemStd)?d.chemStd:null}}catch(e){}
   if(!DB.products.length)DB.products=seedProducts();
   hdLoad();fLoad();try{if(fMigrate())fSave()}catch(e){console.error(e)}try{if(syncHard())hdSave()}catch(e){console.error(e)}
 }
@@ -1108,7 +1150,7 @@ function showPage(p){if(!auSee(p)){toast('Bạn không có quyền xem mục nà
   if(p==='hard'&&!$('p-hard').classList.contains('on')){HD_PAGE=1e9;HD_GO_END=true}
   if(p==='furn'&&!$('p-furn').classList.contains('on')){FPAGE=1e9;FGO_END=true}
   if(p!=='list'&&document.body.classList.contains('wide')){document.body.classList.remove('wide');const b=document.getElementById('btn-wide');if(b)b.textContent='⤢ Mở rộng bảng'}document.querySelectorAll('.page').forEach(e=>e.classList.toggle('on',e.id==='p-'+p));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
-  document.body.classList.toggle('nl-on',p==='nl');({dash:renderDash,list:renderList,check:renderCheck,tem:renderTem,rep:renderReport,nl:renderNL,prod:renderProd,data:renderData,hard:renderHard,furn:renderFurn,users:renderUsers})[p]();window.scrollTo(0,0)}
+  document.body.classList.toggle('nl-on',p==='nl');({dash:renderDash,list:renderList,check:renderCheck,chem:renderChem,tem:renderTem,rep:renderReport,nl:renderNL,prod:renderProd,data:renderData,hard:renderHard,furn:renderFurn,users:renderUsers})[p]();window.scrollTo(0,0)}
 function refresh(){showPage(document.querySelector('.page.on').id.slice(2))}
 function renderDash(){
   fillSelect($('d-grade'),allGrades(),'Tất cả mác',true);yearOptions($('d-year'));
@@ -1764,6 +1806,150 @@ function nlInit(){
     const old=document.title;window.print();setTimeout(()=>document.title=old,1500)};
 }
 
+/* ===== Thành phần hóa (mẫu file Thanh_phan_hoa_CR.xlsm) ===== */
+const CH_EL=['C','Si','Mn','P','S','Ni','Cr','Mo','Al','Cu','V','Zr','Ca','N'];
+const CH_STD0=[{g:'E20',v:['0.19-0.23','0.4-0.6','0.8-1.0','≤0.025','≤0.015','0.45-0.55','1.7-1.9','0.30-0.35','0.01-0.03','≤0.2','-','0.010-0.035','0.003-0.008','≤0.014']},
+ {g:'E28C',v:['0.25-0.29','1.2-1.5','0.7-0.85','','','0.6-0.9','1.6-1.8','0.35-0.45','','','','','','']}];
+let CH_Q='',CH_G='',CH_S='',CH_PAGE=0,CH_PS=50,CH_VIEW=[];
+const chKey=r=>(r.melt||r.bar)?U(r.melt)+'|'+U(r.bar):'id:'+r.id;
+const chStore=()=>{if(!DB.chem||typeof DB.chem!=='object')DB.chem={};return DB.chem};
+const chStds=()=>{if(!Array.isArray(DB.chemStd)||!DB.chemStd.length)DB.chemStd=JSON.parse(JSON.stringify(CH_STD0));return DB.chemStd};
+const chSpec=g=>{const x=U(g);return x?chStds().find(s=>s.g&&x.startsWith(U(s.g))):null};
+function chRange(s){s=String(s||'').trim().replace(/,/g,'.');if(!s||s==='-')return null;let m;
+  if(m=s.match(/^[≤<]=?\s*([\d.]+)$/))return[-Infinity,+m[1]];
+  if(m=s.match(/^[≥>]=?\s*([\d.]+)$/))return[+m[1],Infinity];
+  if(m=s.match(/^([\d.]+)\s*[-–~]\s*([\d.]+)$/))return[+m[1],+m[2]];return null}
+function chBad(spec,i,val){const rg=spec&&chRange(spec.v[i]);if(!rg)return false;const t=String(val==null?'':val).trim().replace(',','.');if(!t||/^[<≤]/.test(t))return false;const x=parseFloat(t);if(isNaN(x))return false;return x<rg[0]-1e-9||x>rg[1]+1e-9}
+const chHas=e=>!!e&&(!!e.d||!!e.n||(e.v||[]).some(x=>String(x||'').trim()!==''));
+function chSet(key,f,val){
+  const S=chStore();let e=S[key];if(!e)e=S[key]={d:'',v:CH_EL.map(()=>''),n:''};
+  val=String(val==null?'':val).trim();
+  if(f==='d')e.d=val;else if(f==='n')e.n=val;else{while(e.v.length<CH_EL.length)e.v.push('');e.v[+f]=val.replace(/(\d),(\d)/g,'$1.$2')}
+  if(!chHas(e))delete S[key];
+}
+function chGroups(){
+  const q=CH_Q.trim().toLowerCase(),S=chStore(),map=new Map();
+  DB.records.forEach(r=>{
+    if(!inYear(r))return;
+    if(CH_G&&r.grade!==CH_G)return;
+    if(q&&![r.product,r.pcode,r.melt,r.bar,r.grade].some(x=>String(x||'').toLowerCase().includes(q)))return;
+    const k=chKey(r);let g=map.get(k);if(!g){g={k,rs:[]};map.set(k,g)}g.rs.push(r)});
+  let a=[...map.values()];
+  if(CH_S==='todo')a=a.filter(g=>!chHas(S[g.k]));else if(CH_S==='done')a=a.filter(g=>chHas(S[g.k]));
+  return a;
+}
+function renderChemStd(ed){
+  const ST=chStds();
+  $('chStd').innerHTML='<thead><tr><th>Mác (đầu mác)</th>'+CH_EL.map(x=>`<th>${x}</th>`).join('')+'<th></th></tr></thead><tbody>'+
+   ST.map((s,i)=>`<tr data-i="${i}"><td><input data-sg="${i}" value="${esc(s.g)}" ${ed?'':'disabled'} style="width:80px;font-weight:700"></td>${CH_EL.map((_,j)=>`<td><input data-sv="${i}:${j}" value="${esc(s.v[j]||'')}" ${ed?'':'disabled'} style="width:78px;text-align:center"></td>`).join('')}<td>${ed?`<button class="ic" data-sdel="${i}" title="Xóa">🗑</button>`:''}</td></tr>`).join('')+'</tbody>';
+}
+function renderChem(){
+  const ed=canEdit('chem');yearOptions($('ch-year'));
+  fillSelect($('ch-grade'),allGrades(),'Tất cả mác',true);$('ch-grade').value=CH_G;
+  renderChemStd(ed);
+  const S=chStore(),gs=chGroups(),pages=Math.max(1,Math.ceil(gs.length/CH_PS));
+  if(CH_PAGE>=pages)CH_PAGE=pages-1;if(CH_PAGE<0)CH_PAGE=0;
+  const pg=gs.slice(CH_PAGE*CH_PS,CH_PAGE*CH_PS+CH_PS);CH_VIEW=pg;
+  const done=gs.filter(g=>chHas(S[g.k])).length;
+  $('ch-count').textContent=gs.length+' mẫu thử · '+done+' đã nhập thành phần · '+(gs.length-done)+' chưa nhập';
+  $('ch-info').textContent='Trang '+(CH_PAGE+1)+'/'+pages;
+  const flat=[];pg.forEach(g=>g.rs.forEach((r,i)=>flat.push({g,r,i})));
+  const dsp=new Array(flat.length).fill(1);
+  for(let i=0;i<flat.length;){let j=i+1;while(j<flat.length&&flat[j].r.date===flat[i].r.date&&flat[i].r.date)j++;dsp[i]=j-i;for(let k=i+1;k<j;k++)dsp[k]=0;i=j}
+  const inp=(k,f,v,w,cls)=>`<input class="chi${cls||''}" data-k="${esc(k)}" data-f="${f}" value="${esc(v)}" ${ed?'':'disabled'} style="width:${w}px">`;
+  let h=`<colgroup><col style="width:84px"><col style="width:128px"><col style="width:68px"><col style="width:66px"><col style="width:112px"><col style="width:100px"><col style="width:96px"><col style="width:128px">${CH_EL.map(()=>'<col style="width:64px">').join('')}<col style="width:200px"></colgroup>`+
+   '<thead><tr><th rowspan="2">Ngày đúc</th><th rowspan="2">Sản phẩm</th><th rowspan="2">Mác</th><th rowspan="2">Số lượng, cái</th><th rowspan="2">Mã sản phẩm</th><th rowspan="2">Mã mẻ đúc</th><th rowspan="2">Mã mẫu thử</th><th colspan="15" class="chg">Thành phần, %</th><th rowspan="2">Ghi chú</th></tr><tr><th>Ngày kiểm tra</th>'+CH_EL.map(x=>`<th>${x}</th>`).join('')+'</tr></thead><tbody>';
+  if(!flat.length)h+=`<tr><td colspan="24" style="padding:30px;color:#6b7788;text-align:center">Không có dòng nào trong bộ lọc này.</td></tr>`;
+  flat.forEach((x,n)=>{
+    const {g,r,i}=x,e=S[g.k]||{d:'',v:[],n:''},sp=chSpec(r.grade),first=i===0,rs=g.rs.length;
+    h+=`<tr${first?' class="cg"':''}${first&&n?' style="border-top:2px solid #8fa1ba"':''}>`+
+     (dsp[n]?`<td rowspan="${dsp[n]}">${esc(fmtDate(r.date))}</td>`:'')+
+     `<td class="l">${esc(r.product)}</td><td>${esc(r.grade)}</td><td>${esc(r.qty)}</td><td class="pc">${esc(r.pcode)}</td>`+
+     (first?`<td rowspan="${rs}">${esc(r.melt)}</td><td rowspan="${rs}" class="pc">${esc(r.bar)}</td><td rowspan="${rs}"><input type="date" class="chi" data-k="${esc(g.k)}" data-f="d" value="${esc(e.d||'')}" ${ed?'':'disabled'} style="width:120px"></td>`+
+       CH_EL.map((_,j)=>`<td rowspan="${rs}">${inp(g.k,j,e.v[j]||'',58,chBad(sp,j,e.v[j])?' bad':'')}</td>`).join('')+
+       `<td rowspan="${rs}">${inp(g.k,'n',e.n||'',190)}</td>`:'')+'</tr>';
+  });
+  $('chTbl').innerHTML=h+'</tbody>';
+}
+function chCsv(){
+  const S=chStore(),hd=['Ngày đúc','Sản phẩm','Mác','Số lượng, cái','Mã sản phẩm','Mã mẻ đúc','Mã mẫu thử','Ngày kiểm tra',...CH_EL,'Ghi chú'];
+  const q=v=>{v=v==null?'':String(v);return /[",;\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  const L=[hd.map(q).join(',')];
+  chGroups().forEach(g=>g.rs.forEach((r,i)=>{const e=S[g.k]||{d:'',v:[],n:''};
+    L.push([fmtDate(r.date),r.product,r.grade,r.qty,r.pcode,r.melt,r.bar,i?'':fmtDate(e.d),...CH_EL.map((_,j)=>i?'':e.v[j]||''),i?'':e.n||''].map(q).join(','))}));
+  download('thanh-phan-hoa.csv','﻿'+L.join('\r\n'),'text/csv;charset=utf-8');
+}
+function chInit(){
+  const T=$('chTbl');
+  T.addEventListener('change',e=>{const t=e.target;if(!t.dataset||t.dataset.k===undefined)return;if(!auGuard('chem','sửa thành phần hóa')){renderChem();return}
+    chSet(t.dataset.k,t.dataset.f,t.value);save();
+    if(/^\d+$/.test(t.dataset.f)){const r=(CH_VIEW.find(g=>g.k===t.dataset.k)||{rs:[]}).rs[0],sp=r&&chSpec(r.grade);t.value=(t.value||'').trim().replace(/(\d),(\d)/g,'$1.$2');t.classList.toggle('bad',chBad(sp,+t.dataset.f,t.value))}
+    $('ch-count').textContent=$('ch-count').textContent});
+  T.addEventListener('input',e=>{const t=e.target;if(t.dataset&&/^\d+$/.test(t.dataset.f||'')){const g=CH_VIEW.find(g=>g.k===t.dataset.k);t.classList.toggle('bad',chBad(g&&chSpec(g.rs[0].grade),+t.dataset.f,t.value))}});
+  T.addEventListener('paste',e=>{const t=e.target;if(!t.dataset||!/^\d+$/.test(t.dataset.f||''))return;
+    const tx=(e.clipboardData||window.clipboardData).getData('text');if(!/[\t\n]/.test(tx.replace(/\n$/,'')))return;
+    e.preventDefault();if(!auGuard('chem','dán thành phần hóa'))return;
+    const rows=tx.replace(/\r/g,'').replace(/\n$/,'').split('\n').map(l=>l.split('\t'));
+    const idx=CH_VIEW.findIndex(g=>g.k===t.dataset.k);if(idx<0)return;const j0=+t.dataset.f;
+    rows.forEach((cells,ri)=>{const g=CH_VIEW[idx+ri];if(!g)return;cells.forEach((v,ci)=>{const j=j0+ci;if(j<CH_EL.length&&v.trim()!=='')chSet(g.k,j,v)})});
+    save();const w=$('chWrap'),x=w.scrollLeft,y=w.scrollTop;renderChem();w.scrollLeft=x;w.scrollTop=y});
+  $('chStd').addEventListener('change',e=>{const t=e.target;if(!auGuard('chem','sửa tiêu chuẩn thành phần hóa')){renderChem();return}
+    const ST=chStds();if(t.dataset.sg!==undefined)ST[+t.dataset.sg].g=t.value.trim();
+    else if(t.dataset.sv){const[i,j]=t.dataset.sv.split(':').map(Number);while(ST[i].v.length<CH_EL.length)ST[i].v.push('');ST[i].v[j]=t.value.trim()}
+    save();renderChem()});
+  $('chStd').addEventListener('click',e=>{const b=e.target.closest('[data-sdel]');if(!b)return;if(!auGuard('chem','xóa tiêu chuẩn'))return;if(confirm('Xóa tiêu chuẩn thành phần của mác này?')){chStds().splice(+b.dataset.sdel,1);if(!DB.chemStd.length)DB.chemStd=[{g:'',v:CH_EL.map(()=>'')}];save();renderChem()}});
+  $('ch-std-add').onclick=()=>{if(!auGuard('chem','thêm tiêu chuẩn'))return;chStds().push({g:'',v:CH_EL.map(()=>'')});save();renderChem()};
+  $('ch-std-reset').onclick=()=>{if(!auGuard('chem','khôi phục tiêu chuẩn'))return;if(confirm('Khôi phục tiêu chuẩn E20 / E28C theo file Excel mẫu?')){DB.chemStd=JSON.parse(JSON.stringify(CH_STD0));save();renderChem()}};
+  $('ch-year').onchange=e=>setYear(e.target.value);
+  $('ch-q').oninput=e=>{CH_Q=e.target.value;CH_PAGE=0;renderChem()};
+  $('ch-grade').onchange=e=>{CH_G=e.target.value;CH_PAGE=0;renderChem()};
+  $('ch-st').onchange=e=>{CH_S=e.target.value;CH_PAGE=0;renderChem()};
+  $('ch-ps').onchange=e=>{CH_PS=+e.target.value;CH_PAGE=0;renderChem()};
+  $('ch-reset').onclick=()=>{CH_Q='';CH_G='';CH_S='';CH_PAGE=0;$('ch-q').value='';$('ch-st').value='';renderChem()};
+  $('ch-prev').onclick=()=>{CH_PAGE--;renderChem()};$('ch-next').onclick=()=>{CH_PAGE++;renderChem()};
+  $('ch-csv').onclick=chCsv;
+  /* ẩn / hiện cột bảng Độ cứng */
+  $('hd-cols').onclick=()=>{const p=$('hcolPanel');if(p.style.display==='block'){p.style.display='none';return}
+    buildHcolPanel();p.style.display='block';const b=$('hd-cols').getBoundingClientRect();
+    p.style.left=Math.max(8,Math.min(b.left,innerWidth-p.offsetWidth-8))+'px';p.style.top=(b.bottom+4)+'px'};
+  $('hcolPanel').addEventListener('click',e=>{const b=e.target.closest('[data-hp]');if(!b)return;if(b.dataset.hp==='all'){HD_HID.clear();hdHidSave();buildHcolPanel();renderHard()}else $('hcolPanel').style.display='none'});
+  $('hcolPanel').addEventListener('change',e=>{const i=e.target;
+    if(i.dataset.hk){i.checked?HD_HID.delete(i.dataset.hk):HD_HID.add(i.dataset.hk)}
+    else if(i.dataset.hg){const ks=i.dataset.hg.split(',');ks.forEach(k=>i.checked?HD_HID.delete(k):HD_HID.add(k))}
+    hdHidSave();buildHcolPanel();renderHard()});
+  document.addEventListener('mousedown',e=>{const p=$('hcolPanel');if(p.style.display==='block'&&!p.contains(e.target)&&e.target.id!=='hd-cols')p.style.display='none'});
+}
+/* ---- ẩn/hiện cột Độ cứng sản phẩm ---- */
+let HD_HID=new Set((()=>{try{return JSON.parse(localStorage.getItem(LS+'_hhid')||'[]')}catch(e){return []}})());
+const hdHidSave=()=>{try{localStorage.setItem(LS+'_hhid',JSON.stringify([...HD_HID]))}catch(e){}};
+const hdColKey=c=>c.id?c.f:(c.f==='v'?'v'+c.k:c.f+c.k);
+function buildHcolPanel(){
+  const grp=(title,items)=>{const ks=items.map(x=>x[0]),on=ks.filter(k=>!HD_HID.has(k)).length;
+    return `<div class="cg"><label><input type="checkbox" data-hg="${ks.join(',')}" ${on===ks.length?'checked':''}> ${esc(title)}</label><span class="muted" style="font-weight:400">(${on}/${ks.length} cột đang hiện)</span></div><div class="cl">`+
+     items.map(([k,n])=>`<label><input type="checkbox" data-hk="${k}" ${HD_HID.has(k)?'':'checked'}> ${esc(n)}</label>`).join('')+'</div>'};
+  let h='<h4>Chọn cột hiển thị trong bảng Độ cứng sản phẩm</h4><div class="toolbar"><button class="btn" data-hp="all">Hiện tất cả</button><button class="btn" data-hp="close" style="margin-left:auto">Đóng</button></div>';
+  h+=grp('Thông tin chung',[['date','Ngày đúc'],['melt','Mã đúc'],['grade','Mác'],['product','Sản phẩm'],['pcode','Mã sản phẩm']]);
+  for(let k=0;k<(HD_R34?4:2);k++)h+=grp('Nhiệt luyện lần '+(k+1),[['ht'+k,'Mã nhiệt luyện'],['t'+k,'Ngày kiểm tra'],['v'+k,'Độ cứng 1 - 2 - 3'],['tb'+k,'Độ cứng TB'],['kq'+k,'KQ'],['n'+k,'Ghi chú']]);
+  $('hcolPanel').innerHTML=h;
+  const n=[...HD_HID].filter(k=>HDC.some(c=>hdColKey(c)===k&&(c.id||c.k<(HD_R34?4:2)))).length;
+  $('hd-cols').textContent=n?`👁 Ẩn/hiện cột (đang ẩn ${n})`:'👁 Ẩn/hiện cột';
+}
+function hdHead(cols){
+  const nk=HD_R34?4:2,by=k=>cols.filter(c=>!c.id&&c.k===k);
+  let s='<colgroup><col style="width:78px">'+cols.map(c=>`<col style="width:${c.w}px">`).join('')+'</colgroup><thead><tr><th class="corner" rowspan="3" style="top:0;left:0;height:78px">#</th>';
+  cols.filter(c=>c.id).forEach(c=>s+=`<th rowspan="3" style="top:0;height:78px">${c.t}</th>`);
+  for(let k=0;k<nk;k++){const n=by(k).length;if(n)s+=`<th colspan="${n}" class="${k%2?'g-t':'g-ht'}" style="top:0;height:26px">Nhiệt luyện lần ${k+1}</th>`}
+  s+='</tr><tr>';
+  for(let k=0;k<nk;k++){const g=by(k),has=f=>g.some(c=>c.f===f),nh=g.filter(c=>c.f==='v'||c.f==='tb').length;
+    if(has('ht'))s+='<th rowspan="2" style="top:26px;height:52px">Mã nhiệt luyện</th>';
+    if(has('t'))s+='<th rowspan="2" style="top:26px;height:52px">Ngày kiểm tra</th>';
+    if(nh)s+=`<th colspan="${nh}" class="g-t" style="top:26px;height:26px">Độ cứng, HB</th>`;
+    if(has('kq'))s+='<th rowspan="2" style="top:26px;height:52px">KQ</th>';
+    if(has('n'))s+='<th rowspan="2" style="top:26px;height:52px">Ghi chú</th>'}
+  s+='</tr><tr>';
+  for(let k=0;k<nk;k++){const g=by(k);if(g.some(c=>c.f==='v'))['1','2','3'].forEach(t=>s+=`<th style="top:52px;height:26px">${t}</th>`);if(g.some(c=>c.f==='tb'))s+='<th style="top:52px;height:26px">TB</th>'}
+  return s+'</tr></thead>'}
+
 /* ===== Xuất PDF trực tiếp (không cần hộp thoại in) ===== */
 const PDFW={"r": [250, 333, 408, 500, 500, 833, 778, 180, 333, 333, 500, 564, 250, 333, 250, 278, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 278, 278, 564, 564, 564, 444, 921, 722, 667, 667, 722, 611, 556, 722, 722, 333, 389, 722, 611, 889, 722, 722, 556, 722, 667, 556, 611, 722, 722, 944, 722, 722, 611, 333, 278, 333, 469, 500, 333, 444, 500, 444, 500, 444, 333, 500, 500, 278, 278, 500, 278, 778, 500, 500, 500, 500, 333, 389, 278, 500, 500, 722, 500, 500, 444, 480, 200, 480, 541, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 250, 333, 500, 500, 500, 500, 200, 500, 333, 760, 276, 500, 564, 333, 760, 333, 400, 564, 300, 300, 333, 500, 453, 250, 333, 300, 310, 500, 750, 750, 750, 444, 722, 722, 722, 722, 722, 722, 889, 667, 611, 611, 611, 611, 333, 333, 333, 333, 722, 722, 722, 722, 722, 722, 722, 564, 722, 722, 722, 722, 722, 722, 556, 500, 444, 444, 444, 444, 444, 444, 667, 444, 444, 444, 444, 444, 278, 278, 278, 278, 500, 500, 500, 500, 500, 500, 500, 564, 500, 500, 500, 500, 500, 500, 500, 500], "b": [250, 333, 555, 500, 500, 1000, 833, 278, 333, 333, 500, 570, 250, 333, 250, 278, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 333, 333, 570, 570, 570, 500, 930, 722, 667, 722, 722, 667, 611, 778, 778, 389, 500, 778, 667, 944, 722, 778, 611, 778, 722, 556, 667, 722, 722, 1000, 722, 722, 667, 333, 278, 333, 581, 500, 333, 500, 556, 444, 556, 444, 333, 500, 556, 278, 333, 556, 278, 833, 556, 500, 556, 556, 444, 389, 333, 556, 500, 722, 500, 500, 444, 394, 220, 394, 520, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 250, 333, 500, 500, 500, 500, 220, 500, 333, 747, 300, 500, 570, 333, 747, 333, 400, 570, 300, 300, 333, 556, 540, 250, 333, 300, 330, 500, 750, 750, 750, 500, 722, 722, 722, 722, 722, 722, 1000, 722, 667, 667, 667, 667, 389, 389, 389, 389, 722, 722, 778, 778, 778, 778, 778, 570, 778, 722, 722, 722, 722, 722, 611, 556, 500, 500, 500, 500, 500, 500, 722, 444, 444, 444, 444, 444, 278, 278, 278, 278, 500, 556, 500, 500, 500, 500, 500, 570, 500, 556, 556, 556, 556, 500, 556, 500]},PDFSYM=549;
 const pdfSafeName=s=>String(s||'').replace(/[\\\/:*?"<>|\r\n]+/g,'_').replace(/\s+/g,' ').trim();
@@ -2227,9 +2413,12 @@ function collectStds(){
       else s[f]=numOrNull(inp.value)});
   });
 }
+function cInDate(r){const f=$('c-from').value,t=$('c-to').value;if(!f&&!t)return true;const d=$('c-dsrc').value==='d'?r.date:r.tdate;if(!d)return false;const s=String(d).slice(0,10);return(!f||s>=f)&&(!t||s<=t)}
 function renderCheckResults(){
   yearOptions($('c-year'));
-  const rows=DB.records.filter(inYear).map(r=>({r,e:evaluate(r)}));const c=k=>rows.filter(x=>x.e.result===k).length;
+  const rows=DB.records.filter(r=>inYear(r)&&cInDate(r)).map(r=>({r,e:evaluate(r)}));
+  {const f=$('c-from').value,t=$('c-to').value;$('c-dinfo').textContent=(f||t)?'Đang lọc '+($('c-dsrc').value==='d'?'ngày đúc':'ngày kiểm tra')+(f?' từ '+fmtDate(f):'')+(t?' đến '+fmtDate(t):'')+' · '+rows.length+' dòng.':''}
+  const c=k=>rows.filter(x=>x.e.result===k).length;
   $('ckpis').innerHTML=[['ok','Đạt',c('Đạt')],['bad','Không đạt',c('Không đạt')],['warn','Thiếu dữ liệu',c('Thiếu dữ liệu')],['','Chờ kết quả',c('Chờ KQ')]].map(k=>`<div class="kpi ${k[0]}"><div class="v">${k[2]}</div><div class="l">${k[1]}</div></div>`).join('');
   // bảng gán tiêu chuẩn cho từng mác
   const cnt={};DB.records.forEach(r=>{if(r.grade)cnt[r.grade]=(cnt[r.grade]||0)+1});
@@ -2253,7 +2442,9 @@ function renderTem(){
   let miss=0;
   const W=281,tw=(W+(cols-1)*0.5)/cols,gap=1.3,bd=0.5;
   const innerH=h-2*(gap+bd),innerW=tw-2*(gap+bd),rh=innerH/3,cw=innerW/2;
-  const fs=Math.max(1.5,Math.min(rh*0.52,(cw-2)/5.6)).toFixed(2);
+  const fs=Math.max(1.5,Math.min(rh*0.7,(innerW*0.46-2)/4.8)).toFixed(2);
+  const ml=Math.max(7,...bars.map(b=>{const r=idx.get(U(b));return Math.max(b.length,r?String(r.melt||'').length:0,r?String(r.grade||'').length:0)}));
+  const vfs=Math.max(1.5,Math.min(rh*0.8,(innerW*0.54-2)/(0.6*ml))).toFixed(2);
   const labs=['Melt NO.','Test Bar NO.','Grade'];
   let html='';
   for(let s=0;s<bars.length;s+=cols){
@@ -2263,8 +2454,8 @@ function renderTem(){
       const it=chunk[c];
       if(!it){tems+='<div class="tem e"></div>';continue}
       const vals=[it.r?it.r.melt:'',it.b,it.r?it.r.grade:''];
-      const trs=labs.map((l,k)=>`<tr style="height:${rh.toFixed(2)}mm"><td>${l}</td><td class="v">${esc(vals[k])}</td></tr>`).join('');
-      tems+=`<div class="tem${it.r?'':' miss'}"><table><colgroup><col style="width:50%"><col style="width:50%"></colgroup><tbody>${trs}</tbody></table></div>`;
+      const trs=labs.map((l,k)=>`<tr style="height:${rh.toFixed(2)}mm"><td>${l}</td><td class="v" style="font-size:${vfs}mm">${esc(vals[k])}</td></tr>`).join('');
+      tems+=`<div class="tem${it.r?'':' miss'}"><table><colgroup><col style="width:46%"><col style="width:54%"></colgroup><tbody>${trs}</tbody></table></div>`;
     }
     html+=`<div class="trow" style="height:${h}mm;font-size:${fs}mm">${tems}</div>`;
   }
@@ -2516,7 +2707,7 @@ const HDC=[];
 [['date','Ngày đúc',84],['melt','Mã đúc',92],['grade','Mác',64],['product','Sản phẩm',130],['pcode','Mã sản phẩm',110]].forEach(([f,t,w])=>HDC.push({f,t,w,id:1}));
 for(let k=0;k<4;k++){HDC.push({f:'ht',k,w:k?196:210},{f:'t',k,w:84});for(let j=0;j<3;j++)HDC.push({f:'v',k,j,w:44});HDC.push({f:'tb',k,w:54},{f:'kq',k,w:78},{f:'n',k,w:130})}
 HDC.forEach((c,i)=>c.i=i);
-const hdCols=()=>HDC.filter(c=>c.id||c.k<2||HD_R34);
+const hdCols=()=>HDC.filter(c=>(c.id||c.k<2||HD_R34)&&!HD_HID.has(hdColKey(c)));
 function hdExcluded(h){
   if(!h||!h.rid)return false;
   const r=DB.records.find(x=>x.id===h.rid);if(!r)return false;
@@ -2545,16 +2736,6 @@ function hdFitW(cols,ed,list){ // list = các dòng đang lọc (mọi trang) �
     let lo=lim[0];if(ed&&(c.f==='ht'||c.f==='n'))lo=Math.max(lo,90); // cột trống vẫn đủ chỗ để gõ
     const need=mx?mx+14:0,[ht,ln]=HD_HDR[c.f]||['',1];
     c.w=Math.round(Math.min(lim[1],Math.max(lo,hdrW(ht,ln),need)))})}
-function hdHead(cols){
-  const nk=HD_R34?4:2;
-  let s='<colgroup><col style="width:78px">'+cols.map(c=>`<col style="width:${c.w}px">`).join('')+'</colgroup><thead><tr><th class="corner" rowspan="3" style="top:0;left:0;height:78px">#</th>';
-  cols.filter(c=>c.id).forEach(c=>s+=`<th rowspan="3" style="top:0;height:78px">${c.t}</th>`);
-  for(let k=0;k<nk;k++)s+=`<th colspan="8" class="${k%2?'g-t':'g-ht'}" style="top:0;height:26px">Nhiệt luyện lần ${k+1}</th>`;
-  s+='</tr><tr>';
-  for(let k=0;k<nk;k++)s+=`<th rowspan="2" style="top:26px;height:52px">Mã nhiệt luyện</th><th rowspan="2" style="top:26px;height:52px">Ngày kiểm tra</th><th colspan="4" class="g-t" style="top:26px;height:26px">Độ cứng, HB</th><th rowspan="2" style="top:26px;height:52px">KQ</th><th rowspan="2" style="top:26px;height:52px">Ghi chú</th>`;
-  s+='</tr><tr>';
-  for(let k=0;k<nk;k++)['1','2','3','TB'].forEach(t=>s+=`<th style="top:52px;height:26px">${t}</th>`);
-  return s+'</tr></thead>'}
 function hdCellHTML(h,c,ed){
   const i=c.i,linked=!!h.rid;
   if(c.id){const dv=hdDisp(h,c),skip=c.f==='pcode'&&hdExcluded(h),cl=skip?' hd-skip':'';
@@ -2614,7 +2795,7 @@ function renderHard(){
   const nBad=rows.filter(h=>hdFinal(h)==='Không đạt').length,nPend=rows.filter(h=>!hdHasHB(h)).length;
   $('h-count').textContent=rows.length+' / '+total+' dòng'+(HD_Y!=='all'?' (năm '+(HD_Y==='none'?'chưa rõ':HD_Y)+')':'')+' · '+nBad+' không đạt · '+nPend+' chưa nhập độ cứng';
   $('hg-info').textContent='Trang '+(HD_PAGE+1)+'/'+pages;
-  $('hd-r34').textContent=HD_R34?'Ẩn nhiệt luyện lần 3 - 4':'Hiện nhiệt luyện lần 3 - 4';
+  $('hd-r34').textContent=HD_R34?'Ẩn nhiệt luyện lần 3 - 4':'Hiện nhiệt luyện lần 3 - 4';buildHcolPanel();
   $('h-std').textContent='Tiêu chuẩn độ cứng (HB): '+(hbTxt()||'chưa đặt — vào tab "Kiểm tra đạt/không đạt"')+'. Độ cứng TB ngoài khoảng này là "Không đạt" (ô TB và cả dòng tô đỏ).';
   hdFitW(cols,ed,rows);const w=78+cols.reduce((a,c)=>a+c.w,0);$('hardTbl').style.width=w+'px';
   $('hardTbl').innerHTML=hdHead(cols)+'<tbody>'+(HD_VIEW.length?HD_VIEW.map((h,i)=>hdRowHTML(h,HD_PAGE*HD_PS+i+1,cols,ed)).join(''):`<tr><td colspan="${cols.length+1}" style="padding:30px;color:#6b7788;text-align:center">Chưa có dòng nào trong bộ lọc này. Nhập dữ liệu ở tab Bảng tổng (dòng mới tự xuất hiện ở đây) hoặc vào tab Dữ liệu để nhập file "Độ cứng sản phẩm".</td></tr>`)+'</tbody>';
@@ -2694,7 +2875,7 @@ function hSelTSV(){
   for(let r=r1;r<=r2;r++){const h=HD_VIEW[r];if(!h)continue;const row=[];for(let p=c1;p<=c2;p++)row.push(tsvq(hCellText(h,HD_COLS[p])));out.push(row.join('\t'))}
   return out.join('\n')}
 function hAllTSV(){
-  const cols=HD_R34?HDC:HDC.filter(c=>c.id||c.k<2),rows=hdFiltered(),out=[cols.map(c=>tsvq(hColName(c))).join('\t')];
+  const cols=hdCols(),rows=hdFiltered(),out=[cols.map(c=>tsvq(hColName(c))).join('\t')];
   rows.forEach(h=>out.push(cols.map(c=>tsvq(hCellText(h,c))).join('\t')));return out.join('\n')}
 function hPushUndo(label){HUNDO.push({label,snap:HARD.map(hdPack)});if(HUNDO.length>10)HUNDO.shift()}
 function hUndo(){
@@ -2842,12 +3023,12 @@ function sha256(str){
   return [h0,h1,h2,h3,h4,h5,h6,h7].map(x=>x.toString(16).padStart(8,'0')).join('')}
 const AUK=LS+'_auth';
 let AU={enabled:false,users:[],log:[],rec:null},CUR=null,AU_REC_SHOW='';
-const AU_SECS=[['dash','Tổng quan','v'],['list','Bảng tổng','e'],['hard','Độ cứng sản phẩm','e'],['check','Kiểm tra đạt/không đạt (tiêu chuẩn)','e'],['tem','In tem NBT','v'],['rep','Báo cáo cơ tính','v'],['nl','Báo cáo NL (nhiệt luyện, FRM-0606)','v'],['prod','Thông số nhiệt luyện','e'],['furn','Thông số lò NL (lò hóa già/ủ/tôi/ram, biểu đồ nhiệt)','e'],['data','Dữ liệu (nhập file, sao lưu, khôi phục)','e']];
+const AU_SECS=[['dash','Tổng quan','v'],['list','Bảng tổng','e'],['hard','Độ cứng sản phẩm','e'],['chem','Thành phần hóa','e'],['check','Kiểm tra đạt/không đạt (tiêu chuẩn)','e'],['tem','In tem NBT','v'],['rep','Báo cáo cơ tính','v'],['nl','Báo cáo NL (nhiệt luyện, FRM-0606)','v'],['prod','Thông số nhiệt luyện','e'],['furn','Thông số lò NL (lò hóa già/ủ/tôi/ram, biểu đồ nhiệt)','e'],['data','Dữ liệu (nhập file, sao lưu, khôi phục)','e']];
 const AU_COLG=['Thông tin chung (ngày đúc, sản phẩm, mác, số lượng, mã sản phẩm, Melt No, mã mẫu thử, NBT status, ghi chú)','Thông số nhiệt luyện (mã nhiệt luyện, thời gian giữ, tốc độ nâng nhiệt…)','Kết quả cơ tính (ngày kiểm tra, dai va đập, độ cứng)','Đơn hàng / ghi chú cuối'];
 const AU_PRESETS={
- view:{label:'Chỉ xem (xem mọi thứ, không sửa được gì)',perm:{dash:'view',list:'view',hard:'view',check:'view',tem:'view',rep:'view',nl:'view',prod:'view',furn:'view',data:'none'},colg:[],rowops:false},
- lab:{label:'Nhập kết quả cơ tính + độ cứng (chỉ sửa cột kết quả)',perm:{dash:'view',list:'edit',hard:'edit',check:'view',tem:'view',rep:'view',nl:'view',prod:'view',furn:'view',data:'none'},colg:[2],rowops:false},
- editor:{label:'Biên tập viên (sửa mọi dữ liệu, không nhập/khôi phục file)',perm:{dash:'view',list:'edit',hard:'edit',check:'edit',tem:'view',rep:'view',nl:'view',prod:'edit',furn:'edit',data:'view'},colg:[0,1,2,3],rowops:true}};
+ view:{label:'Chỉ xem (xem mọi thứ, không sửa được gì)',perm:{dash:'view',list:'view',hard:'view',chem:'view',check:'view',tem:'view',rep:'view',nl:'view',prod:'view',furn:'view',data:'none'},colg:[],rowops:false},
+ lab:{label:'Nhập kết quả cơ tính + độ cứng (chỉ sửa cột kết quả)',perm:{dash:'view',list:'edit',hard:'edit',chem:'edit',check:'view',tem:'view',rep:'view',nl:'view',prod:'view',furn:'view',data:'none'},colg:[2],rowops:false},
+ editor:{label:'Biên tập viên (sửa mọi dữ liệu, không nhập/khôi phục file)',perm:{dash:'view',list:'edit',hard:'edit',chem:'edit',check:'edit',tem:'view',rep:'view',nl:'view',prod:'edit',furn:'edit',data:'view'},colg:[0,1,2,3],rowops:true}};
 const colGroup=c=>c<=9?0:c<=32?1:c<=45?2:3;
 function auLoad(){
   try{const s=localStorage.getItem(AUK);if(s)AU=Object.assign({enabled:false,users:[],log:[],rec:null},JSON.parse(s))}catch(e){}
@@ -2901,7 +3082,7 @@ function can(sec){
   if(!AU.enabled)return vo?'view':'edit';
   if(!CUR)return 'none';
   if(CUR.admin)return vo?'view':'edit';
-  const pm=CUR.perm||{},v=pm[sec]||(sec==='furn'?pm.prod:sec==='nl'?pm.rep:'')||'none';return vo&&v==='edit'?'view':v}
+  const pm=CUR.perm||{},v=pm[sec]||(sec==='furn'?pm.prod:sec==='nl'?pm.rep:sec==='chem'?pm.hard:'')||'none';return vo&&v==='edit'?'view':v}
 const canEdit=sec=>can(sec)==='edit';
 const auCanUsers=()=>!AU.enabled||!!(CUR&&CUR.admin);
 const auSee=p=>p==='users'?auCanUsers():can(p)!=='none';
@@ -3512,6 +3693,8 @@ function init(){
   ['d-grade','d-from','d-to'].forEach(i=>$(i).oninput=renderDash);
   $('yearBar').addEventListener('click',e=>{const b=e.target.closest('button[data-y]');if(b)setYear(b.dataset.y)});
   ['d-year','c-year'].forEach(i=>$(i).onchange=e=>setYear(e.target.value));
+  ['c-dsrc','c-from','c-to'].forEach(i=>$(i).onchange=renderCheckResults);
+  $('c-dreset').onclick=()=>{$('c-from').value='';$('c-to').value='';renderCheckResults()};
   $('d-reset').onclick=()=>{$('d-grade').value='';$('d-from').value='';$('d-to').value='';renderDash()};
   const ADV=['f-lha','f-lu','f-lt','f-lr','f-lno','f-prod','f-pcode','f-melt','f-bar','f-htc','f-order','f-run','f-fail','f-note','f-miss','f-tick'];
   const FL=['f-q','f-grade','f-res','f-nbt','f-from','f-to','f-tfrom','f-tto','f-tstat','f-shared',...ADV];window.FL_CLEAR=()=>{cfClearAll();FL.forEach(i=>$(i).value='');$('f-sort').value='asc';page=1e9};
@@ -3532,7 +3715,7 @@ function init(){
   $('rp-red').onchange=renderReport;
   $('rp-print').onclick=()=>exportReportFiles('pdf');
   $('rp-paper').onclick=()=>{if(!REP_IDS.length){alert('Chưa có phiếu báo cáo để in.');return}const recs=REP_IDS.map(id=>DB.records.find(x=>x.id===id)).filter(Boolean),old=document.title;document.title=repFileNames(recs,$('rp-op').value)[0].name.replace(/\.pdf$/,'');window.print();setTimeout(()=>document.title=old,1500)};
-  $('rp-back').onclick=()=>showPage('list');nlInit();
+  $('rp-back').onclick=()=>showPage('list');chInit();nlInit();
   $('btn-sel-tem').onclick=()=>{const bars=[...new Set(DB.records.filter(r=>selected.has(r.id)&&r.bar).map(r=>r.bar))];if(!bars.length){alert('Hãy tick chọn các dòng cần in tem.');return}$('t-in').value=bars.join('\n');showPage('tem')};
   const cnt=()=>{$('f-count').textContent=$('f-count').textContent.replace(/đã chọn \d+/,'đã chọn '+selected.size);updateSelBar()};
   const tb=$('tbl');
@@ -3667,7 +3850,7 @@ function init(){
     save();YEAR=yearStats().years[0]||'all';msg($('i-msg'),'Hoàn tất — '+report(r,type==='tong'?'Tổng':'Cơ tính')+'.');$('i-text').value='';renderData();
   };
   $('b-exp').onclick=()=>download('sao-luu-co-tinh-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(Object.assign({},DB,{hardTSV:HARD.map(hdPack).join('\n'),furn:FD})),'application/json');
-  $('b-file').onchange=e=>{const f=e.target.files[0];if(!f)return;if(!auGuard('data','khôi phục dữ liệu')){e.target.value='';return}const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!Array.isArray(d.records))throw new Error('Sai định dạng');if(!confirm('Khôi phục sẽ thay thế toàn bộ dữ liệu hiện tại. Tiếp tục?'))return;DB.records=d.records;DB.products=d.products||DB.products;DB.stds=migrateStds(d);if(typeof d.hardTSV==='string')HARD=d.hardTSV.split('\n').filter(Boolean).map(hdUnpack);if(d.furn&&typeof d.furn==='object'){FD=d.furn;fSave()}save();hdSave();auLog('Khôi phục dữ liệu từ bản sao lưu');YEAR=yearStats().years[0]||'all';renderData();alert('Đã khôi phục '+DB.records.length+' bản ghi.')}catch(x){alert('File không hợp lệ: '+x.message)}};rd.readAsText(f)};
+  $('b-file').onchange=e=>{const f=e.target.files[0];if(!f)return;if(!auGuard('data','khôi phục dữ liệu')){e.target.value='';return}const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!Array.isArray(d.records))throw new Error('Sai định dạng');if(!confirm('Khôi phục sẽ thay thế toàn bộ dữ liệu hiện tại. Tiếp tục?'))return;DB.records=d.records;DB.products=d.products||DB.products;DB.stds=migrateStds(d);DB.chem=d.chem&&typeof d.chem==='object'?d.chem:{};DB.chemStd=Array.isArray(d.chemStd)?d.chemStd:null;if(typeof d.hardTSV==='string')HARD=d.hardTSV.split('\n').filter(Boolean).map(hdUnpack);if(d.furn&&typeof d.furn==='object'){FD=d.furn;fSave()}save();hdSave();auLog('Khôi phục dữ liệu từ bản sao lưu');YEAR=yearStats().years[0]||'all';renderData();alert('Đã khôi phục '+DB.records.length+' bản ghi.')}catch(x){alert('File không hợp lệ: '+x.message)}};rd.readAsText(f)};
   $('b-csv').onclick=()=>download('co-tinh-toan-bo.csv',toCSV(DB.records.map(r=>({r,e:evaluate(r)}))),'text/csv');
   $('b-clear').onclick=()=>{if(!auGuard('data','xóa dữ liệu'))return;if(confirm('Xóa TOÀN BỘ bản ghi? Hãy chắc chắn đã sao lưu.')){DB.records=[];selected.clear();save();YEAR='all';renderData()}};
   $('m-cancel').onclick=()=>$('modal').classList.remove('on');
@@ -3738,7 +3921,7 @@ function cloudApply(x,stamp,sa){
   if(!x||!x.db)return false;CLOUD_APPLYING=true;let auNeed=false;
   try{
     try{auNeed=auAdopt(sa||x.auth)}catch(e){console.error('Lỗi áp dụng phân quyền',e)}
-    DB=x.db;if(!Array.isArray(DB.records))DB.records=[];if(!Array.isArray(DB.products))DB.products=[];
+    DB=x.db;if(!Array.isArray(DB.records))DB.records=[];if(!Array.isArray(DB.products))DB.products=[];if(!DB.chem||typeof DB.chem!=='object')DB.chem={};
     HARD=(x.hard||'').split('\n').filter(Boolean).map(hdUnpack);FD=x.furn||{};
     try{localStorage.setItem(LS,JSON.stringify(DB));localStorage.setItem(LS+'_hard',HARD.map(hdPack).join('\n'));localStorage.setItem(LS+'_furn',JSON.stringify(FD))}catch(e){toast('Bộ nhớ trình duyệt đầy — dữ liệu mới chỉ hiển thị, chưa lưu được vào máy này')}
     CLOUD_LAST=Number(stamp||x.stamp)||CLOUD_LAST;CLOUD_DIRTY=false;CLOUD_REV++;cloudPersist();
