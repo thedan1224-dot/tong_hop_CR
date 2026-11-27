@@ -355,6 +355,8 @@ body.nl-on #cloud-sync-status{display:none!important;visibility:hidden!important
 #chStd input{border:1px solid transparent;background:transparent;padding:3px 2px;font-size:12.5px;box-sizing:border-box}#chStd input:focus{border-color:#3a7bd5;background:#fff;outline:none}
 #hardTbl td[data-c="4"],#hardTbl td[data-c="4"] input{font-weight:700}
 #tbl td[data-c="4"],#tbl td[data-c="4"] input.cell{font-weight:700}
+.tem td{font-size:inherit!important}
+.tem table{font-size:inherit!important}
 </style>
 </head>
 <body>
@@ -1235,7 +1237,7 @@ function computeGW(){
     const w=c===8?wrap2W(v,TFONT_S):textWf(v,c===7||c===48?TFONT_B:TFONT);if(w>mx[c])mx[c]=w}});
   return MINW.map((mn,c)=>{
     /* phần đệm: chữ cách viền 4px mỗi bên + viền; ô Ngày đúc / Mã sản phẩm có thêm nút 📅 / ＋ bên phải */
-    const need=mx[c]?mx[c]+(c===0||c===4?27:c===8?11:c===7?12:c===1||c===2?28:14):0;
+    const need=mx[c]?mx[c]+(c===0||c===4||c===33?27:c===8?11:c===7?12:c===1||c===2?28:14):0;
     return Math.round(Math.min(MAXW[c],Math.max(mn,GW_HDR[c]?hdrW(GW_HDR[c],3):0,GW_VHDR[c]?vhdrW(GW_VHDR[c]):0,need)))});
 }
 /* ===== Tự động lấy thông số lò (tab "Thông số lò NL") đưa vào các cột nhiệt luyện của Bảng tổng ===== */
@@ -1462,6 +1464,7 @@ function rowHTML(x,si,no){
       const lst=c===1?' list="dl-prod"':c===2?' list="dl-grade"':'';
       let k=c===6?si.kind(r):'';if(r.inh&&(c===5||c===6))k=(k||'')+' inh';
       const tip=r.inh&&(c===5||c===6)?' title="Dùng chung mẻ nấu và mẫu thử với dòng sản phẩm đại diện phía trên"':k.startsWith('shr')?' title="Mẫu thử dùng chung với dòng sản phẩm khác (cùng Melt No)"':k.startsWith('dup')?' title="Trùng Mã mẫu thử nhưng KHÁC Melt No — cần kiểm tra"':'';
+      if(c===33){s+=`<td class="dc${r.tdate?'':' empty'}" data-c="33"><input size="1" class="cell" data-c="33" value="${esc(v)}" placeholder="dd/mm/yyyy" autocomplete="off"><button class="dcb" tabindex="-1" data-a="cal" title="Chọn ngày trên lịch (Alt+↓)">📅</button><input type="date" class="dp" tabindex="-1" aria-hidden="true"></td>`;continue}
       if(c===0){const f0=fz(0);s+=`<td class="dc${r.date?'':' empty'}${f0.cls}" data-c="0"${f0.st}><input size="1" class="cell" data-c="0" value="${esc(v)}" placeholder="dd/mm/yyyy" autocomplete="off"><button class="dcb" tabindex="-1" data-a="cal" title="Chọn ngày trên lịch (Alt+↓)">📅</button><input type="date" class="dp" tabindex="-1" aria-hidden="true"></td>`;continue}
       if(c===4){const f4=fz(4);s+=`<td class="pn${r.pnote?' has':''}${f4.cls}" data-c="4"${f4.st}><input size="1" class="cell" data-c="4" value="${esc(v)}" autocomplete="off"><button class="cn" data-a="note"${r.pnote?'':' title="Thêm ghi chú cho mã sản phẩm này"'}>${r.pnote?'ⓘ':'＋'}</button></td>`;continue}
       const fc=fz(c),av=autoView(r,c);
@@ -2203,7 +2206,7 @@ function renderList(){
 /* mở lịch tháng cho ô Ngày đúc; ngày chọn được ghi vào ô như khi gõ tay (dd/mm/yyyy) */
 function dcOpen(btn){
   const td=btn.closest('td'),inp=td&&td.querySelector('input.cell'),dp=td&&td.querySelector('input.dp');if(!inp||!dp)return;
-  if(inp.readOnly||!canEdit('list')||!colOK(0)){toast('Bạn không có quyền sửa cột này');return}
+  if(inp.readOnly||!canEdit('list')||!colOK(+td.dataset.c)){toast('Bạn không có quyền sửa cột này');return}
   dp.value=parseDate(inp.value,'dmy')||'';
   dp.onchange=()=>{if(!dp.value)return;const nv=fmtDate(dp.value);if(nv===inp.value)return;inp.value=nv;inp.dispatchEvent(new Event('change',{bubbles:true}))};
   try{if(typeof dp.showPicker==='function'){dp.showPicker();return}}catch(e){}
@@ -2214,7 +2217,7 @@ function refreshRow(tr,r){
     const c=+td.dataset.c,v=getCell(r,c,e);
     if(RO.has(c)){if(c===8)td.innerHTML=wbrH(v);else td.textContent=v;td.classList.toggle('bad',badCell(c,e));if(c===48)td.title=e.reasons.join('; ')}
     else if(c===7){td.className=nbCls(v);const s=td.firstChild;if(s.value!==v)s.value=v}
-    else{const i=td.firstChild;if(i!==document.activeElement&&i.value!==v)i.value=v;if(c===0)td.classList.toggle('empty',!r.date);if(AUTOCOLS.has(c))autoMark(td,r,c)}
+    else{const i=td.firstChild;if(i!==document.activeElement&&i.value!==v)i.value=v;if(c===0)td.classList.toggle('empty',!r.date);if(c===33)td.classList.toggle('empty',!r.tdate);if(AUTOCOLS.has(c))autoMark(td,r,c)}
   });
 }
 function gridPaste(inp,text){gridPasteAt(inp.closest('tr').dataset.id,+inp.dataset.c,text)}
@@ -2446,9 +2449,8 @@ function renderTem(){
   let miss=0;
   const W=281,tw=(W+(cols-1)*0.5)/cols,gap=1.3,bd=0.5;
   const innerH=h-2*(gap+bd),innerW=tw-2*(gap+bd),rh=innerH/3,cw=innerW/2;
-  const fs=Math.max(1.5,Math.min(rh*0.7,(innerW*0.46-2)/4.8)).toFixed(2);
   const ml=Math.max(7,...bars.map(b=>{const r=idx.get(U(b));return Math.max(b.length,r?String(r.melt||'').length:0,r?String(r.grade||'').length:0)}));
-  const vfs=Math.max(1.5,Math.min(rh*0.8,(innerW*0.54-2)/(0.6*ml))).toFixed(2);
+  const fs=Math.max(1.5,Math.min(rh*0.72,(cw-2.4)/Math.max(5.6,0.66*ml))).toFixed(2);
   const labs=['Melt NO.','Test Bar NO.','Grade'];
   let html='';
   for(let s=0;s<bars.length;s+=cols){
@@ -2458,8 +2460,8 @@ function renderTem(){
       const it=chunk[c];
       if(!it){tems+='<div class="tem e"></div>';continue}
       const vals=[it.r?it.r.melt:'',it.b,it.r?it.r.grade:''];
-      const trs=labs.map((l,k)=>`<tr style="height:${rh.toFixed(2)}mm"><td>${l}</td><td class="v" style="font-size:${vfs}mm">${esc(vals[k])}</td></tr>`).join('');
-      tems+=`<div class="tem${it.r?'':' miss'}"><table><colgroup><col style="width:46%"><col style="width:54%"></colgroup><tbody>${trs}</tbody></table></div>`;
+      const trs=labs.map((l,k)=>`<tr style="height:${rh.toFixed(2)}mm"><td>${l}</td><td class="v">${esc(vals[k])}</td></tr>`).join('');
+      tems+=`<div class="tem${it.r?'':' miss'}"><table><colgroup><col style="width:50%"><col style="width:50%"></colgroup><tbody>${trs}</tbody></table></div>`;
     }
     html+=`<div class="trow" style="height:${h}mm;font-size:${fs}mm">${tems}</div>`;
   }
@@ -3767,7 +3769,7 @@ function init(){
       const nx=e.target.closest('tr').nextElementSibling;if(nx){const i=nx.querySelector(`input.cell[data-c="${e.target.dataset.c}"]`);if(i){i.focus();i.select()}}
     }
   });
-  tb.addEventListener('keydown',e=>{if(e.altKey&&e.key==='ArrowDown'&&e.target.classList&&e.target.classList.contains('cell')&&e.target.dataset.c==='0'){e.preventDefault();const b=e.target.parentElement.querySelector('button.dcb');if(b)dcOpen(b)}});
+  tb.addEventListener('keydown',e=>{if(e.altKey&&e.key==='ArrowDown'&&e.target.classList&&e.target.classList.contains('cell')&&(e.target.dataset.c==='0'||e.target.dataset.c==='33')){e.preventDefault();const b=e.target.parentElement.querySelector('button.dcb');if(b)dcOpen(b)}});
   tb.addEventListener('paste',e=>{
     const t=e.target;if(!t.classList.contains('cell')||t.tagName!=='INPUT')return;
     const text=(e.clipboardData||window.clipboardData).getData('text');
