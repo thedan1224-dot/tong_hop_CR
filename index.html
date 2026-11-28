@@ -537,7 +537,7 @@ body.nl-on #cloud-sync-status{display:none!important;visibility:hidden!important
  <div class="card">
   <div class="toolbar"><button class="btn" id="ch-csv">Xuất CSV (theo bộ lọc)</button><span class="muted" id="ch-count" style="margin-left:auto;align-self:center"></span></div>
   <div class="gridwrap" id="chWrap"><table id="chTbl"></table></div>
-  <div class="pager"><span id="ch-info"></span><label style="flex-direction:row;align-items:center;gap:6px;color:var(--mut);font-size:12px">Số mẫu / trang <select id="ch-ps"><option value="50">50</option><option value="100">100</option><option value="200">200</option></select></label><span><button class="btn" id="ch-prev">‹ Trước</button> <button class="btn" id="ch-next">Sau ›</button></span></div>
+  <div class="pager"><span id="ch-info"></span><label style="flex-direction:row;align-items:center;gap:6px;color:var(--mut);font-size:12px">Số dòng / trang <select id="ch-ps"><option value="100">100</option><option value="200">200</option><option value="300" selected>300</option><option value="500">500</option></select></label><span><button class="btn" id="ch-prev">‹ Trước</button> <button class="btn" id="ch-next">Sau ›</button></span></div>
  </div>
 </section>
 <section id="p-check" class="page">
@@ -1821,7 +1821,7 @@ const CH_SEED2={"VF010252|VF01022":{"d":"2026-01-05","v":["0.285","1.445","0.776
 const CH_EL=['C','Si','Mn','P','S','Ni','Cr','Mo','Al','Cu','V','Zr','Ca','N'];
 const CH_STD0=[{g:'E20',v:['0.19-0.23','0.4-0.6','0.8-1.0','≤0.025','≤0.015','0.45-0.55','1.7-1.9','0.30-0.35','0.01-0.03','≤0.2','-','0.010-0.035','0.003-0.008','≤0.014']},
  {g:'E28C',v:['0.25-0.29','1.2-1.5','0.7-0.85','','','0.6-0.9','1.6-1.8','0.35-0.45','','','','','','']}];
-let CH_Q='',CH_G='',CH_S='',CH_PAGE=1e9,CH_PS=50,CH_VIEW=[],CH_GO_END=true;
+let CH_Q='',CH_G='',CH_S='',CH_PAGE=1e9,CH_PS=300,CH_VIEW=[],CH_GO_END=true;
 function chSeed(){try{const ver=localStorage.getItem(LS+'_chemseed');if(ver==='2')return;const S=chStore();let n=0;
   const same=(x,y)=>x&&y&&x.d===y.d&&(x.n||'')===(y.n||'')&&JSON.stringify(x.v)===JSON.stringify(y.v);
   if(!ver)Object.keys(CH_SEED).forEach(k=>{if(!S[k]){S[k]=CH_SEED[k];n++}});
@@ -1864,9 +1864,11 @@ function renderChem(){
   chSeed();const ed=canEdit('chem');yearOptions($('ch-year'));
   fillSelect($('ch-grade'),allGrades(),'Tất cả mác',true);$('ch-grade').value=CH_G;
   renderChemStd(ed);
-  const S=chStore(),gs=chGroups(),pages=Math.max(1,Math.ceil(gs.length/CH_PS));
+  const S=chStore(),gs=chGroups(),PGS=[];
+  {let cur=[],n=0;gs.forEach(g=>{if(cur.length&&n+g.rs.length>CH_PS){PGS.push(cur);cur=[];n=0}cur.push(g);n+=g.rs.length});if(cur.length||!PGS.length)PGS.push(cur)}
+  const pages=PGS.length;
   if(CH_PAGE>=pages)CH_PAGE=pages-1;if(CH_PAGE<0)CH_PAGE=0;
-  const pg=gs.slice(CH_PAGE*CH_PS,CH_PAGE*CH_PS+CH_PS);CH_VIEW=pg;
+  const pg=PGS[CH_PAGE];CH_VIEW=pg;
   const done=gs.filter(g=>chHas(S[g.k])).length;
   $('ch-count').textContent=gs.length+' mẫu thử · '+done+' đã nhập thành phần · '+(gs.length-done)+' chưa nhập';
   $('ch-info').textContent='Trang '+(CH_PAGE+1)+'/'+pages;
